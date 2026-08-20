@@ -1,0 +1,1079 @@
+/* ==========================================================================
+   Petpooja AI — everything happens in the chat.
+
+   No bottom sheets. Options, order review, your details, payment,
+   confirmation and tracking are all in-thread widgets, so the conversation
+   is never covered by a layer you have to dismiss to see what you typed.
+
+   ── THE OVERFLOW RULE ─────────────────────────────────────────────────────
+   Every flex and grid item carries min-width:0 (see the universal selector).
+   A flex/grid item defaults to min-width:auto — it cannot shrink below its
+   min-content width, and min-width BEATS max-width. One nowrap label was
+   able to push the whole app wider than the phone and get its right edge
+   sliced off. Fixed px widths never exceed the viewport; rails are
+   full-bleed with internal padding, never negative margins.
+   ========================================================================== */
+
+:root{
+  --brand:#F36A20;          /* Primary/Brand */
+  --brand-dark:#DA540C;     /* Primary/Dark  */
+  --brand-ink:#FFFFFF;      /* white on orange, matching the Figma badge */
+
+  --bg:#08090B;
+  --glass:rgba(255,255,255,.05);
+  --glass-2:rgba(255,255,255,.08);
+  --line:rgba(255,255,255,.12);
+  --line-soft:rgba(255,255,255,.06);
+  --line-strong:rgba(255,255,255,.2);
+
+  --card:#131519;
+  --card-2:#191C21;
+  --field:#0E1013;
+  --header:rgba(8,9,11,.7);
+  --composer:rgba(18,20,26,.72);
+
+  --text:#F7F7F8;
+  --text-2:#B9BBC0;
+  --text-3:#8E9096;
+
+  --veg:#4FC17C;
+  --veg-deep:#1F7A42;
+  --nonveg:#E86B58;
+  --star:#F0B429;
+
+  --f:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --pad:clamp(12px,4.2vw,16px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --r-sm:12px; --r-md:16px; --r-lg:20px; --r-pill:999px;
+
+  /* The agent's column. Everything the assistant produces — bubble,
+     widget, carousel, combo card, starters — starts on this line, so the
+     thread reads as one left edge instead of two competing ones. Derived
+     from the avatar rather than typed in, so shrinking the avatar moves
+     every card with it and nothing drifts out of alignment. */
+  --ava:22px;
+  --ava-gap:8px;
+  --lane:calc(var(--pad) + var(--ava) + var(--ava-gap));
+}
+
+[data-theme='light']{
+  /* Light, third pass. Two things were wrong and they were the same thing.
+
+     The page was #FBF8F4 — a hair off white — so a white card had no way to
+     separate itself and needed a hairline to exist at all. That hairline is
+     what made every widget look like a form field. Dropping the ground to
+     #F1EDE7 lets the card float on its own surface, and the stroke comes
+     off entirely: separation is now fill + one soft warm shadow.
+
+     Second, orange was doing five jobs at once — card edge, selected pill,
+     live ring, add button, chip. Now it does one: the thing you press. Every
+     other former accent resolves to warm neutral or, where a selection needs
+     to be unmistakable, to near-black. Dark theme is untouched. */
+  --bg:#F1EDE7;
+  --glass:rgba(28,20,12,.04); --glass-2:rgba(28,20,12,.06);
+  --line:rgba(28,20,12,.11); --line-soft:rgba(28,20,12,.055); --line-strong:rgba(28,20,12,.22);
+  --card:#FFFFFF; --card-2:#FAF8F4; --field:#FFFFFF;
+  --header:rgba(241,237,231,.86); --composer:rgba(255,255,255,.9);
+  /* --text-3 was #8A8178 — 3.82:1 on white, under the 4.5 AA bar, and it
+     carries real content here: the resting field label, the add-on
+     description, the choices line under Add. Darkened until it clears AA
+     on both the card and the page ground. (Pantheon's own Text/Tertiary
+     is #999999 at 2.85:1; this is deliberately stricter.) */
+  --text:#17120C; --text-2:#5F574E; --text-3:#726B63;
+  --veg:#2E8B57; --nonveg:#C0392B; --star:#B87206;
+  /* The shadow scale that replaces the strokes. Warm-tinted, not grey — a
+     neutral shadow over a warm ground reads as dirt. */
+  --sh-1:0 1px 2px rgba(58,38,14,.05);
+  --sh-2:0 1px 2px rgba(58,38,14,.05),0 8px 20px -6px rgba(58,38,14,.10);
+  --sh-3:0 2px 4px rgba(58,38,14,.05),0 14px 30px -8px rgba(58,38,14,.14);
+  color-scheme:light;
+}
+
+*,*::before,*::after{box-sizing:border-box;min-width:0;}
+
+html,body{margin:0;padding:0;height:100%;width:100%;max-width:100%;
+  overflow-x:hidden;overscroll-behavior-y:none;}
+body{font:400 15px/1.45 var(--f);color:var(--text);background:var(--bg);
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-y:hidden;}
+button,input,textarea{font:inherit;color:inherit;}
+button{border:0;background:none;cursor:pointer;}
+img{display:block;max-width:100%;}
+
+.app{position:relative;width:100%;max-width:100%;height:100dvh;min-height:100dvh;
+  margin-inline:auto;display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+  overflow:hidden;background:var(--bg);}
+@media (min-width:460px){
+  body{display:flex;align-items:center;justify-content:center;background:#050608;}
+  [data-theme='light'] body{background:#EFE8E0;}
+  .app{max-width:400px;height:min(860px,100dvh);border-radius:34px;
+    border:1px solid var(--line-soft);box-shadow:0 30px 80px rgba(0,0,0,.5);}
+}
+
+.amb{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.amb i{position:absolute;width:280px;height:280px;border-radius:50%;
+  background:rgba(243,106,32,.05);filter:blur(49px);}
+.amb i:nth-child(1){left:-169px;top:121px;}
+.amb i:nth-child(2){right:-169px;top:454px;}
+
+/* ================================ HEADER ================================ */
+.hd{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:calc(14px + var(--safe-t)) var(--pad) 14px;background:var(--header);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);}
+.hd__l{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.hd__r{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+.hd__t{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.hd__n{font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* 10px of padding matches the switcher pill's inset so the status line sits
+   under the title text, not under the pill's edge. */
+.hd__s{padding-left:10px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hd__dot{width:6px;height:6px;border-radius:50%;background:var(--veg);flex:0 0 6px;}
+
+.mark{position:relative;width:39px;height:39px;flex:0 0 39px;border-radius:19px;
+  background:linear-gradient(135deg,#F36A20 0%,#F2CAB5 50%,#F2AA83 100%);
+  display:grid;place-items:center;box-shadow:0 0 22px rgba(243,106,32,.22);}
+.mark::after{content:'';position:absolute;inset:3px;border-radius:16px;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.85) 0%,rgba(255,255,255,.06) 42%,rgba(255,255,255,0) 70%);}
+.mark svg{position:relative;z-index:1;width:17px;height:17px;fill:#3A1400;}
+/* Was 26px, which put the mark on a par with the text it sits beside. It's
+   an attribution, not a participant — smaller, and the bubble leads. */
+.mark--sm{width:var(--ava);height:var(--ava);flex-basis:var(--ava);border-radius:50%;}
+.mark--sm::after{inset:2px;border-radius:50%;}
+.mark--sm svg{width:10px;height:10px;}
+/* flex-start puts the mark level with the top of the bubble box, which
+   reads as high because the bubble has 11px of padding above its text.
+   3px down lands it on the first line instead. */
+.m>.mark--sm{margin-top:3px;}
+.mark--lg{width:64px;height:64px;flex-basis:64px;border-radius:32px;}
+.mark--lg::after{inset:5px;border-radius:27px;}
+.mark--lg svg{width:28px;height:28px;}
+
+.ico{position:relative;width:40px;height:40px;flex:0 0 40px;border-radius:58px;
+  background:var(--glass);border:1px solid var(--line);color:var(--text);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid;place-items:center;}
+.ico svg{width:20px;height:20px;fill:currentColor;}
+.pill{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;
+  border-radius:10px;background:var(--brand);color:var(--brand-ink);border:2px solid var(--bg);
+  font-size:11px;font-weight:600;line-height:1;display:none;place-items:center;}
+.pill.on{display:grid;}
+
+/* ================================ THREAD ================================ */
+.th{position:relative;z-index:10;min-width:0;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;padding:14px 0 6px;
+  display:flex;flex-direction:column;gap:10px;scrollbar-width:none;}
+.th::-webkit-scrollbar{display:none;}
+/* flex-shrink:0 is load-bearing. .th is a flex column inside a bounded
+   grid row, so without it flex compresses each message to make everything
+   fit instead of letting the thread scroll — and .w{overflow:hidden} then
+   slices the bottom off the widget. */
+.th>*{min-width:0;max-width:100%;flex:0 0 auto;}
+
+/* The empty state is a message, not a landing page — same avatar, same
+   bubble, same timestamp as everything else the assistant says. Top-aligned
+   on purpose: a chat reads down from the top, and a centred opening line
+   jumped upward the instant you replied to it. */
+.wel{padding:2px 0 8px;}
+.wel .bub{max-width:calc(100% - var(--ava) - var(--ava-gap));}
+/* Only two words wear the brand: the greeting and the name. */
+.wel .hi,.wel .nm{font-style:normal;font-weight:600;color:var(--brand);}
+[data-theme='light'] .wel .hi,
+[data-theme='light'] .wel .nm{color:var(--brand-dark);}
+.wel .bub .t{margin-top:6px;font-size:11px;color:var(--text-3);}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  margin-top:14px;padding-left:var(--lane);padding-right:var(--pad);}
+.grid2 button{display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:10px 12px;
+  border-radius:var(--r-sm);background:var(--card);border:1px solid var(--line-soft);
+  font-size:13px;font-weight:500;text-align:left;}
+.grid2 i{font-style:normal;font-size:15px;flex:0 0 auto;}
+.grid2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ------------------------------- messages ------------------------------- */
+.m{display:flex;gap:var(--ava-gap);align-items:flex-start;padding-inline:var(--pad);min-width:0;}
+.m--u{justify-content:flex-end;}
+.bub{max-width:84%;min-width:0;padding:11px 14px;border-radius:var(--r-lg);
+  border-top-left-radius:6px;background:var(--card);border:1px solid var(--line-soft);
+  font-size:15px;line-height:1.45;overflow-wrap:anywhere;word-break:break-word;}
+.bub b{font-weight:600;}
+.bub .sub{display:block;margin-top:5px;font-size:13px;color:var(--text-2);}
+/* Orange bubble, white text — matches the badge in the Figma frame. */
+.bub--u{background:var(--brand);background-color:var(--brand);color:var(--brand-ink);border-color:transparent;
+  border-radius:var(--r-lg);border-top-right-radius:6px;font-weight:500;}
+.bub--u .t{display:flex;justify-content:flex-end;gap:3px;margin-top:3px;font-size:11px;opacity:.85;}
+
+.think{display:inline-flex;align-items:center;gap:9px;padding:11px 14px;border-radius:var(--r-lg);
+  border-top-left-radius:6px;background:var(--card);border:1px solid var(--line-soft);
+  font-size:13px;color:var(--text-2);min-width:0;}
+.dots{display:inline-flex;gap:4px;flex:0 0 auto;}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--brand);}
+
+/* ============================== CHAT WIDGETS ============================
+   Every step that used to be a bottom sheet is one of these. They sit in
+   the thread, scroll with it, and collapse to a one-line summary once done
+   so the log stays readable.
+   ======================================================================== */
+.w{margin-inline:var(--lane) var(--pad);border-radius:var(--r-md);background:var(--card);
+  border:1px solid var(--line);overflow:hidden;min-width:0;}
+/* Only the widget actually waiting on you wears the accent. A resolved one
+   drops back to neutral so the eye lands on the single live thing. */
+.w--hot{border-color:rgba(243,106,32,.38);}
+.w.done{border-color:var(--line-soft)!important;background:var(--card-2);}
+.w.done .w__d .go{color:var(--text-2);}
+.w__h{display:flex;align-items:center;gap:8px;padding:12px 14px 0;min-width:0;}
+.w__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w__h .n{font-size:11px;color:var(--text-3);flex:0 0 auto;}
+.w__b{padding:11px 14px 13px;min-width:0;}
+.w__f{display:flex;align-items:center;gap:9px;padding:11px 14px;flex-wrap:wrap;
+  border-top:1px solid var(--line-soft);background:var(--card-2);min-width:0;}
+.w__f .pr{flex:1;}
+
+.w__d{display:none;align-items:center;gap:8px;padding:12px 14px;font-size:13px;min-width:0;}
+.w.done .w__h,.w.done .w__b,.w.done .w__f{display:none;}
+.w.done .w__d{display:flex;}
+.w.done{border-color:var(--line-soft);}
+.w__d svg{width:15px;height:15px;fill:var(--veg);flex:0 0 15px;}
+.w__d .k{color:var(--text-2);flex:0 0 auto;}
+.w__d b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w__d .go{margin-left:auto;flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-2);}
+.w__d .go:hover{color:var(--brand);}
+
+.row{display:flex;align-items:center;gap:10px;font-size:13px;min-width:0;}
+.row+.row{margin-top:9px;}
+.row .g{flex:1;min-width:0;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.row b{flex:0 0 auto;font-weight:500;font-variant-numeric:tabular-nums;}
+.rule{height:1px;background:var(--line-soft);margin:11px 0;}
+.tot{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;min-width:0;}
+.tot b{margin-left:auto;flex:0 0 auto;font-variant-numeric:tabular-nums;}
+.note{font-size:11px;color:var(--text-3);margin-top:8px;}
+
+/* --------------------------- variant chips -------------------------------
+   These were rounded-rectangle buttons stacking their label over a price
+   delta, which made a row of choices look like a row of actions — the same
+   shape as the thing that actually commits the order. Pantheon `Chips` is
+   the component for picking among a small set, so that's what they are now:
+   Shape=Round, Icons=Leading, one line.
+
+   The tick is a real leading flex child rather than an absolutely-positioned
+   glyph with a hand-tuned padding-left. That means it can animate its own
+   width open, and the label never has to know it exists.
+   -------------------------------------------------------------------------- */
+.opts{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
+.ob{position:relative;min-height:38px;padding:0 14px;border-radius:var(--r-pill);
+  background:var(--glass);border:1px solid var(--line);
+  font-size:13px;font-weight:500;color:var(--text);
+  display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;
+  white-space:nowrap;overflow:hidden;
+  transition:background .16s,border-color .16s,color .16s,padding .16s;}
+.ob>span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.ob small{flex:0 0 auto;font-size:11.5px;font-weight:400;color:var(--text-3);}
+.ob::before{content:'';flex:0 0 0;width:0;height:13px;overflow:hidden;
+  background:currentColor;transition:width .16s ease,flex-basis .16s ease;
+  -webkit-mask:var(--tk) center/contain no-repeat;mask:var(--tk) center/contain no-repeat;}
+.ob[aria-pressed='true']{background:var(--brand);border-color:var(--brand);
+  color:var(--brand-ink);padding-left:11px;}
+.ob[aria-pressed='true']::before{flex-basis:13px;width:13px;}
+.ob[aria-pressed='true'] small{color:rgba(255,255,255,.85);}
+:root{--tk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");}
+
+.cr{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:9px 11px;
+  border-radius:var(--r-sm);background:var(--field);border:1px solid var(--line-soft);
+  text-align:left;min-width:0;}
+.cr+.cr{margin-top:7px;}
+.cr[aria-pressed='true']{border-color:var(--brand);background:rgba(243,106,32,.1);}
+.bx{width:20px;height:20px;flex:0 0 20px;border-radius:6px;border:1.5px solid var(--line-strong);
+  display:grid;place-items:center;}
+.cr[aria-pressed='true'] .bx{background:var(--brand);border-color:var(--brand);}
+.bx svg{width:12px;height:12px;fill:var(--brand-ink);opacity:0;}
+.cr[aria-pressed='true'] .bx svg{opacity:1;}
+.cr__n{flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cr__p{font-size:13px;font-weight:500;color:var(--text-2);flex:0 0 auto;}
+.cr__i{width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:var(--glass-2);
+  display:grid;place-items:center;}
+.cr__i svg{width:17px;height:17px;fill:var(--text);}
+.cr__b{flex:1;min-width:0;}
+.cr__d{font-size:11px;color:var(--text-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rd{width:19px;height:19px;flex:0 0 19px;border-radius:50%;border:1.5px solid var(--line-strong);
+  display:grid;place-items:center;}
+.cr[aria-pressed='true'] .rd{border-color:var(--brand);}
+.cr[aria-pressed='true'] .rd::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--brand);}
+
+/* ============================== TEXT FIELD ==============================
+   Pantheon `Text Input` — Material Design 3 outlined field with a floating
+   NOTCHED label. This is the one component taken wholesale from the system,
+   and the notch is the whole point of it: the label doesn't hover above a
+   box or sit on top of a filled tint, it cuts a gap through the outline and
+   lives in it. Implemented the way Pantheon, Material Web and MUI all do
+   it — a real <fieldset> whose <legend> physically interrupts the top
+   border, so the gap is laid out by the browser rather than faked with a
+   background swatch that has to match the fill behind it.
+
+   Size Large (48) for a thumb. Radius Square/Small (8). Fill Surface/
+   Primary. Focus is Border/Brand at 1px FLAT — Pantheon is explicit that
+   there is no glow and no 2px ring, which is also one less orange halo in
+   light mode.
+   ======================================================================== */
+.fl{display:block;min-width:0;}
+.fl+.fl{margin-top:12px;}
+.fl__box{position:relative;display:block;min-width:0;cursor:text;
+  background:var(--field);border-radius:8px;}
+
+.fl__box input,.fl__box textarea{display:block;width:100%;min-width:0;height:48px;
+  padding:0 12px;margin:0;border:0;outline:0;background:none;color:var(--text);
+  font-size:15px;font-weight:500;border-radius:8px;-webkit-appearance:none;appearance:none;}
+.fl__box textarea{height:auto;min-height:76px;padding:13px 12px 11px;line-height:1.45;
+  font-weight:400;resize:none;}
+
+/* Default state: the label IS the placeholder, sitting inside the field. */
+.fl__lab{position:absolute;left:0;top:0;transform-origin:top left;
+  transform:translate(12px,13px);max-width:calc(100% - 24px);
+  font-size:15px;font-weight:400;line-height:22px;color:var(--text-3);
+  pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:transform .17s cubic-bezier(.2,0,0,1),color .17s,font-weight .17s;}
+
+/* The outline. `top:-6px` pulls the border up so the notched legend lands
+   centred on it; the legend is invisible but still occupies layout, which
+   is what carves the gap. */
+.fl__ol{position:absolute;top:-6px;left:0;right:0;bottom:0;margin:0;padding:0 7px;
+  border:1px solid var(--line);border-radius:8px;pointer-events:none;
+  overflow:hidden;min-width:0;transition:border-color .17s;}
+.fl__ol legend{float:unset;width:auto;padding:0;overflow:hidden;white-space:nowrap;
+  font-size:11.8px;line-height:11px;visibility:hidden;max-width:.01px;
+  transition:max-width .05s;}
+.fl__ol legend span{display:inline-block;padding:0 5px;opacity:0;visibility:visible;}
+
+/* Float + notch together, on focus or once there's a value. */
+.fl__box input:focus~.fl__lab,.fl__box textarea:focus~.fl__lab,
+.fl__box input:not(:placeholder-shown)~.fl__lab,
+.fl__box textarea:not(:placeholder-shown)~.fl__lab{
+  transform:translate(12px,-9px) scale(.786);font-weight:500;color:var(--text-2);}
+.fl__box input:focus~.fl__ol legend,.fl__box textarea:focus~.fl__ol legend,
+.fl__box input:not(:placeholder-shown)~.fl__ol legend,
+.fl__box textarea:not(:placeholder-shown)~.fl__ol legend{
+  max-width:100%;transition:max-width .1s .05s;}
+
+/* Active. 1px, flat, no ring. */
+.fl__box input:focus~.fl__ol,.fl__box textarea:focus~.fl__ol{border-color:var(--brand);}
+.fl__box input:focus~.fl__lab,.fl__box textarea:focus~.fl__lab{color:var(--brand);}
+
+/* Error. */
+.fl.bad .fl__ol{border-color:var(--nonveg)!important;}
+.fl.bad .fl__lab{color:var(--nonveg)!important;}
+.fl em{display:block;font-size:11px;font-style:normal;line-height:1.4;
+  color:var(--nonveg);margin:6px 0 0;padding-left:12px;}
+
+.fl .cnt{position:absolute;right:12px;top:0;height:48px;display:flex;align-items:center;
+  font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;
+  pointer-events:none;transition:color .2s,opacity .2s;}
+.fl .cnt.ok{color:var(--veg);}
+
+/* Phone. +91 is a permanent prefix, so the field is never visually empty and
+   the label stays notched from the start. Digits group 5+5 and the field
+   reserves room on both flanks so a full number can't run under the count. */
+.fl--tel .fl__box input{padding-left:48px;padding-right:58px;
+  letter-spacing:.04em;font-variant-numeric:tabular-nums;}
+.fl--tel .pre{position:absolute;left:12px;top:0;height:48px;display:flex;align-items:center;
+  font-size:15px;font-weight:500;color:var(--text-2);pointer-events:none;transition:color .2s;}
+.fl--tel .fl__box input:focus~.pre{color:var(--text);}
+.fl--tel .fl__lab{transform:translate(12px,-9px) scale(.786);font-weight:500;color:var(--text-2);}
+.fl--tel .fl__ol legend{max-width:100%;}
+.fl--tel .tick{position:absolute;right:12px;top:15px;width:18px;height:18px;
+  border-radius:50%;background:var(--veg);display:grid;place-items:center;
+  opacity:0;transform:scale(.5);pointer-events:none;}
+.fl--tel .tick svg{width:11px;height:11px;fill:#fff;}
+.fl--tel.done .tick{opacity:1;transform:scale(1);}
+.fl--tel.done .cnt{opacity:0;}
+
+/* --------------------------------- chips --------------------------------- */
+.chip{flex:0 0 auto;min-height:38px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;
+  border-radius:var(--r-pill);background:var(--glass);border:1px solid var(--line);
+  font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;}
+.chip--b{border-color:rgba(243,106,32,.45);background:rgba(243,106,32,.12);color:var(--brand);}
+.chiprow{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;
+  padding:0 var(--pad) 2px;-webkit-overflow-scrolling:touch;min-width:0;}
+.chiprow::-webkit-scrollbar{display:none;}
+
+/* --------------------------------- rails --------------------------------- */
+.rail{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:2px var(--pad) 8px var(--lane);min-width:0;}
+.rail::-webkit-scrollbar{display:none;}
+.rail>*{scroll-snap-align:start;flex:0 0 auto;}
+
+/* --------------------------------------------------------------------------
+   DISH CARD — rebuilt on the reference layout.
+
+   Reference was near-black; that reads as a different product sitting inside
+   this one. Same structure, warm surface: image carries the weight, name at
+   17px, one metadata row (rating · count · diet), description, then the
+   money row — price and portion stacked on the left, Customize quiet, and
+   the price ON the Add button so you commit knowing the number.
+   -------------------------------------------------------------------------- */
+.fc{width:min(76vw,272px);border-radius:18px;overflow:hidden;background:var(--card);
+  border:1px solid var(--line);}
+
+.fc__im{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--glass-2);}
+.fc__im img{width:100%;height:100%;object-fit:cover;}
+.fc__im::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,transparent 34%,transparent 62%,rgba(0,0,0,.28) 100%);}
+.fc__tag{position:absolute;top:9px;left:9px;right:9px;display:flex;gap:5px;flex-wrap:wrap;z-index:2;}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--r-pill);
+  font-size:11px;font-weight:500;background:rgba(8,9,11,.7);color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  white-space:nowrap;overflow:hidden;}
+.tag--ai{background:var(--brand);color:var(--brand-ink);border-color:rgba(255,255,255,.28);}
+.tag--ai svg{width:11px;height:11px;fill:currentColor;flex:0 0 11px;}
+.tag--sp{background:rgba(232,107,88,.92);color:#fff;border-color:transparent;}
+
+.fc__b{padding:12px 13px 13px;min-width:0;}
+.fc__n{font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* One metadata row: rating, how many rated it, then the diet mark. */
+.fc__m{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;
+  font-size:12px;color:var(--text-2);min-width:0;}
+.fc__m .st{display:inline-flex;align-items:center;gap:4px;font-weight:500;color:var(--text);}
+.fc__m .st svg{width:12px;height:12px;fill:var(--star);}
+.fc__m .dt{display:inline-flex;align-items:center;gap:5px;font-weight:500;}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--text-3);flex:0 0 3px;}
+.veg{width:14px;height:14px;flex:0 0 14px;border:1.5px solid var(--veg);border-radius:3px;
+  display:grid;place-items:center;}
+.veg::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--veg);}
+.veg--n{border-color:var(--nonveg);}
+.veg--n::after{background:var(--nonveg);}
+
+.fc__d{margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--text-2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* Money row. Price and portion stack so the number owns its own line. */
+.fc__f{display:flex;align-items:center;gap:9px;margin-top:13px;min-width:0;}
+.fc__p{flex:0 0 auto;min-width:0;}
+.fc__p .pr{display:block;font-size:18px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;line-height:1.15;}
+.fc__p small{display:block;font-size:11px;color:var(--text-3);margin-top:2px;}
+/* One action, and the line under it that replaces the Customize button. */
+.fc__cta{margin-left:auto;flex:0 1 auto;min-width:0;display:flex;
+  flex-direction:column;align-items:flex-end;gap:3px;}
+.fc__cta small{font-size:10.5px;line-height:1;color:var(--text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.fc__f .b{margin-left:auto;}
+.fc__cta .b{margin-left:0;}
+.fc__f .b+.b{margin-left:0;}
+
+/* -------------------------------- buttons -------------------------------- */
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;
+  padding:0 14px;border-radius:var(--r-pill);font-size:13px;font-weight:500;
+  white-space:nowrap;overflow:hidden;min-width:0;transition:background .18s,opacity .18s;}
+.b svg{width:15px;height:15px;fill:currentColor;flex:0 0 15px;}
+.b:disabled{opacity:.5;pointer-events:none;}
+.b--p{background:var(--brand);color:var(--brand-ink);}
+.b--p:hover{background:var(--brand-dark);}
+.b--g{background:transparent;border:1px solid var(--line);}
+.b--bl{width:100%;min-height:50px;font-size:15px;}
+.b--ok{background:var(--veg-deep);color:#fff;}
+/* --------------------------- add-on suggestions ---------------------------
+   This was three floating mini-cards on a horizontal rail: three separate
+   surfaces, three filled orange add buttons and a swipe gesture, for what
+   is really a two or three item list. Every one of those cards was paying
+   for its own border and its own accent.
+
+   It's one widget now. Rows read straight down in a single pass — thumbnail,
+   name, why you'd want it, price, add. The container does the containing, so
+   the rows only need a hairline between them, and the add affordance is a
+   quiet outline instead of a filled dot repeated three times.
+   -------------------------------------------------------------------------- */
+.w--sug .w__b{padding:4px 6px 6px;}
+.sg{display:flex;align-items:center;gap:11px;width:100%;padding:9px 8px;
+  border-radius:12px;text-align:left;min-width:0;transition:background .16s;}
+.sg+.sg{box-shadow:inset 0 1px 0 var(--line-soft);}
+.sg:active{background:var(--glass);}
+.sg img{width:44px;height:44px;flex:0 0 44px;border-radius:10px;object-fit:cover;
+  background:var(--glass-2);}
+.sg__b{flex:1;min-width:0;display:block;}
+.sg__n{display:block;font-size:14px;font-weight:500;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sg__d{display:block;font-size:11.5px;line-height:1.35;color:var(--text-3);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sg__p{flex:0 0 auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+.sg__x{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--line-strong);color:var(--text);transition:background .16s,border-color .16s;}
+.sg__x svg{width:15px;height:15px;fill:currentColor;}
+.sg.on .sg__x{background:var(--veg-deep);border-color:var(--veg-deep);color:#fff;}
+
+/* ------------------------------ special notes -----------------------------
+   A bare textarea labelled "anything for the kitchen?" gets left empty,
+   because writing a note is work and you don't know what's allowed to go in
+   it. The eight things people actually ask for are one tap each, and the
+   Pantheon field underneath still takes the ninth.
+
+   The presets are toggles, not a filled palette — they read as a list of
+   things you could say, so an unselected one has to be quiet.
+   -------------------------------------------------------------------------- */
+.nt{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft);min-width:0;}
+.nt__h{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-2);margin-bottom:9px;}
+.nt__c{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;min-width:0;}
+.nb{min-height:32px;padding:0 11px;border-radius:var(--r-pill);
+  background:var(--glass);border:1px solid var(--line-soft);
+  font-size:12.5px;font-weight:500;color:var(--text-2);
+  display:inline-flex;align-items:center;gap:5px;max-width:100%;
+  white-space:nowrap;overflow:hidden;
+  transition:background .15s,border-color .15s,color .15s;}
+.nb[aria-pressed='true']{background:var(--brand);border-color:var(--brand);
+  color:var(--brand-ink);padding-left:8px;}
+.nb[aria-pressed='true']::before{content:'';width:11px;height:11px;flex:0 0 11px;
+  background:currentColor;-webkit-mask:var(--tk) center/contain no-repeat;
+  mask:var(--tk) center/contain no-repeat;}
+/* Same rule as everywhere else in light: a selection is near-black, because
+   eight orange pills would out-shout the one button that actually submits. */
+[data-theme='light'] .nb[aria-pressed='true']{
+  background:var(--text);border-color:var(--text);color:#fff;}
+.nt .fl+.fl{margin-top:0;}
+
+/* ------------------------- collapsed note trigger -------------------------
+   On the order card the note is behind this. Eight chips plus a field is a
+   lot of standing chrome for something most orders never use, and that card
+   has one job: the food and the total. Collapsed, it doubles as the read-back
+   — once a note exists the button shows it rather than saying "Add" again.
+   -------------------------------------------------------------------------- */
+.ntt{display:flex;align-items:center;gap:9px;width:100%;margin-top:12px;
+  padding:10px 12px;border-radius:12px;min-width:0;text-align:left;
+  background:var(--glass);border:1px dashed var(--line);
+  transition:background .16s,border-color .16s;}
+.ntt:hover{background:var(--glass-2);}
+.ntt svg{width:14px;height:14px;flex:0 0 14px;fill:var(--text-3);}
+.ntt__t{flex:1;min-width:0;font-size:12.5px;color:var(--text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ntt__a{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--text-2);}
+/* Set, it stops looking like an empty slot and starts looking like content. */
+.ntt--on{border-style:solid;border-color:var(--line-soft);background:var(--card-2);}
+.ntt--on svg{fill:var(--brand);}
+[data-theme='light'] .ntt--on svg{fill:var(--brand-dark);}
+.ntt--on .ntt__t{color:var(--text);}
+
+/* ------------------------------ note popover ------------------------------
+   The native popover API, so this lands in the top layer. That matters:
+   the order widget is overflow:hidden and inside a scrolling thread, so an
+   absolutely-positioned panel would be clipped by its own card. Esc and
+   click-outside come free with it.
+   -------------------------------------------------------------------------- */
+.ntp{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));
+  transform:translateX(-50%);
+  width:calc(min(100vw,400px) - var(--pad) * 2);max-width:100%;
+  margin:0;padding:0;border:0;z-index:80;
+  background:var(--card);border-radius:var(--r-lg);
+  box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;}
+[data-theme='light'] .ntp{box-shadow:0 18px 50px -8px rgba(58,38,14,.28),
+  0 2px 6px rgba(58,38,14,.08);}
+/* Native popovers are display:none until shown; the fallback mirrors that. */
+.ntp:not(:popover-open):not(.on){display:none;}
+.ntp::backdrop{background:rgba(0,0,0,.5);}
+.ntp__b{padding:4px 14px 0;max-height:56dvh;overflow-y:auto;scrollbar-width:none;}
+.ntp__b::-webkit-scrollbar{display:none;}
+/* Inside the popover the block is the whole content, so it needs no rule
+   above it separating it from anything. */
+.ntp__b .nt{margin-top:0;padding-top:14px;border-top:0;}
+.ntp__f{padding:12px 14px 14px;}
+
+/* The note read back. It matters that this looks like a quote of what you
+   asked for rather than another field — you're checking it, not editing it. */
+.ntl{display:flex;gap:8px;align-items:flex-start;margin-top:11px;padding:9px 11px;
+  border-radius:12px;background:var(--glass);min-width:0;}
+.ntl svg{width:14px;height:14px;flex:0 0 14px;fill:var(--brand);margin-top:2px;}
+[data-theme='light'] .ntl svg{fill:var(--brand-dark);}
+.ntl span{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--text-2);
+  overflow-wrap:anywhere;}
+.ntl b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
+.ntl--ok{margin-top:14px;text-align:left;}
+
+/* ------------------------------- combo card -------------------------------
+   "Meal for two" used to answer with a shrug — no intent, no items, four
+   more chips. It's a real bundle now, and a bundle has to show its working:
+   you're being asked to accept somebody else's pick of four dishes, so every
+   one of them is listed with its quantity, the sum it's discounting against
+   is struck through in plain view, and the saving sits where you'd look for
+   the catch. Full width rather than a rail — a set meal is a considered
+   choice, not something to flick past.
+   -------------------------------------------------------------------------- */
+.cbs{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.cb{margin-inline:var(--lane) var(--pad);padding:13px 14px 14px;border-radius:var(--r-md);
+  background:var(--card);border:1px solid var(--line);min-width:0;overflow:hidden;}
+[data-theme='light'] .cb{border-color:transparent;box-shadow:var(--sh-2);}
+
+.cb__h{display:flex;align-items:center;gap:8px;min-width:0;}
+.cb__k{flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* The only tinted thing on the card, because it's the only claim it makes. */
+.cb__sv{flex:0 0 auto;padding:3px 8px;border-radius:var(--r-pill);
+  font-size:11px;font-weight:600;white-space:nowrap;
+  background:rgba(79,193,124,.14);color:var(--veg);}
+[data-theme='light'] .cb__sv{background:rgba(46,139,87,.12);color:#1F6B42;}
+
+.cb__n{margin:7px 0 0;font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.25;}
+.cb__d{margin:5px 0 0;font-size:13px;line-height:1.4;color:var(--text-2);}
+
+.cb__l{margin-top:11px;border-radius:12px;background:var(--glass);padding:4px 8px;min-width:0;}
+.cb__i{display:flex;align-items:center;gap:9px;padding:6px 0;min-width:0;}
+.cb__i+.cb__i{box-shadow:inset 0 1px 0 var(--line-soft);}
+.cb__i img{width:30px;height:30px;flex:0 0 30px;border-radius:8px;object-fit:cover;
+  background:var(--glass-2);}
+.cb__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cb__in .veg{flex:0 0 12px;width:12px;height:12px;}
+.cb__in .veg::after{width:5px;height:5px;}
+.cb__iq{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--text-2);
+  font-variant-numeric:tabular-nums;}
+
+.cb__f{display:flex;align-items:center;gap:10px;margin-top:12px;min-width:0;}
+.cb__p{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;min-width:0;}
+.cb__p .pr{font-size:19px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;}
+.cb__p s{font-size:13px;color:var(--text-3);text-decoration-thickness:1px;
+  font-variant-numeric:tabular-nums;}
+.cb__f .b{margin-left:auto;}
+
+/* ---------------------------- configured dish ---------------------------- */
+.bt__t{display:flex;gap:11px;min-width:0;}
+.bt__t img{width:66px;height:66px;flex:0 0 66px;border-radius:var(--r-sm);object-fit:cover;background:var(--glass-2);}
+.bt__n{font-size:16px;font-weight:600;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-width:0;}
+.sp span{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--r-pill);
+  font-size:11px;font-weight:400;background:var(--glass-2);color:var(--text-2);
+  white-space:nowrap;overflow:hidden;max-width:100%;}
+.sp .x{background:rgba(232,107,88,.16);color:var(--nonveg);}
+.sp .x svg{width:10px;height:10px;fill:currentColor;flex:0 0 10px;}
+
+/* -------------------------------- order lines ---------------------------- */
+.ln{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-soft);min-width:0;}
+.ln:last-of-type{border-bottom:0;}
+.ln img{width:48px;height:48px;flex:0 0 48px;border-radius:10px;object-fit:cover;background:var(--glass-2);}
+.ln__b{flex:1;min-width:0;}
+.ln__n{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ln__c{font-size:11px;color:var(--text-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ln__x{font-size:11px;color:var(--nonveg);margin-top:2px;}
+.ln__f{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap;min-width:0;}
+.stp{display:inline-flex;align-items:center;gap:2px;border-radius:var(--r-pill);
+  background:var(--glass-2);padding:2px;flex:0 0 auto;}
+.stp button{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;}
+.stp button svg{width:14px;height:14px;fill:currentColor;}
+.stp span{min-width:20px;text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+.ln__p{margin-left:auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;flex:0 0 auto;}
+.lk{font-size:11px;font-weight:500;color:var(--brand);flex:0 0 auto;}
+.lk--x{color:var(--text-3);}
+
+/* ------------------------------- confirmation ---------------------------- */
+.ok{text-align:center;padding:6px 2px 2px;}
+.ok__r{width:76px;height:76px;margin:0 auto 14px;border-radius:50%;padding:2px;
+  background:linear-gradient(135deg,#F36A20,#F2AA83);}
+.ok__r div{width:100%;height:100%;border-radius:50%;background:var(--card);display:grid;place-items:center;}
+.ok__r svg{width:32px;height:32px;fill:var(--veg);}
+.ok h3{margin:0 0 5px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
+.ok p{margin:0;font-size:13px;color:var(--text-2);}
+.ok__g{display:flex;gap:8px;margin-top:14px;min-width:0;}
+.ok__g div{flex:1;min-width:0;padding:10px;border-radius:var(--r-sm);background:var(--glass-2);text-align:left;}
+.ok__g small{display:block;font-size:10px;color:var(--text-3);}
+.ok__g b{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+
+/* --------------------------------- tracking ------------------------------ */
+.ts{display:flex;gap:12px;min-width:0;}
+.ts__r{display:flex;flex-direction:column;align-items:center;flex:0 0 20px;}
+.td{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);
+  display:grid;place-items:center;flex:0 0 20px;background:var(--card);}
+.td svg{width:11px;height:11px;fill:#fff;opacity:0;}
+.tl{width:2px;flex:1;min-height:20px;background:var(--line-soft);}
+.ts--d .td{background:var(--veg-deep);border-color:var(--veg-deep);}
+.ts--d .td svg{opacity:1;}
+.ts--d .tl{background:var(--veg-deep);}
+.ts--a .td{border-color:var(--brand);background:var(--brand);}
+.ts--a .td::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-ink);}
+.ts__b{padding-bottom:14px;min-width:0;}
+.ts__n{font-size:13px;font-weight:500;}
+.ts--p .ts__n{color:var(--text-3);font-weight:400;}
+.ts__d{font-size:11px;color:var(--text-2);margin-top:1px;}
+
+/* --------------------------------- browse -------------------------------- */
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;min-width:0;}
+.cats::-webkit-scrollbar{display:none;}
+.cats .chip[aria-pressed='true']{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);}
+.mr{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);min-width:0;}
+.mr:last-child{border-bottom:0;}
+.mr img{width:46px;height:46px;flex:0 0 46px;border-radius:10px;object-fit:cover;background:var(--glass-2);}
+.mr__b{flex:1;min-width:0;}
+.mr__n{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:0;}
+.mr__n span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mr__p{font-size:13px;font-weight:600;margin-top:2px;}
+.off{font-size:11px;font-weight:500;color:var(--text-3);padding:5px 9px;border-radius:8px;
+  background:var(--glass-2);flex:0 0 auto;white-space:nowrap;overflow:hidden;}
+
+/* ------------------------------ attribution ------------------------------
+   One quiet line under the composer. The mark is the same Petpooja logo the
+   header uses; brand orange is the one hue that holds on both the near-black
+   and the warm near-white ground, so only the wordmark needs to move — and
+   it rides on the theme's own --text-3, so it moves for free.
+   -------------------------------------------------------------------------- */
+.fin{margin:-1px 0 0;padding:0 var(--pad);
+  display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
+  font-size:10.5px;line-height:1.4;color:var(--text-3);text-align:center;}
+.fin__p{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
+/* The logotype is two-colour by design: letters follow the theme through
+   currentColor, arcs hold the brand red on both grounds. Only the colour
+   needs a theme rule — the artwork itself never changes. */
+.fin__l{display:inline-flex;align-items:center;flex:0 0 auto;color:var(--text-2);}
+.fin__l svg{width:60px;height:11px;display:block;}
+
+/* ================================= DOCK ================================= */
+.dk{position:relative;z-index:20;min-width:0;display:flex;flex-direction:column;gap:8px;
+  padding:8px 0 calc(10px + var(--safe-b));
+  background:linear-gradient(180deg,transparent,var(--bg) 34%);}
+
+.bar{display:none;align-items:center;gap:10px;margin-inline:var(--pad);
+  padding:8px 8px 8px 10px;border-radius:var(--r-md);background:var(--card);
+  border:1px solid var(--line);min-width:0;}
+.bar.on{display:flex;}
+.bar__im{display:flex;flex:0 0 auto;}
+.bar__im img{width:30px;height:30px;border-radius:8px;object-fit:cover;
+  border:2px solid var(--card);background:var(--glass-2);}
+.bar__im img+img{margin-left:-11px;}
+.bar__t{flex:1;min-width:0;}
+.bar__1{display:block;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar__2{display:block;font-size:11px;color:var(--text-2);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.cw{padding-inline:var(--pad);min-width:0;}
+.cp{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:62px;
+  padding:10px 10px 10px 15px;border-radius:68px;background:var(--composer);
+  border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);transition:border-color .25s;}
+[data-theme='light'] .cp{border-color:var(--line);}
+.cp.on{border-color:var(--brand);}
+.cp textarea{flex:1;min-width:0;border:0;outline:0;resize:none;background:none;
+  font-size:15px;line-height:1.35;max-height:80px;padding:0;}
+.cp textarea::placeholder{color:transparent;}
+
+/* ------------------------- rotating prompt ideas -------------------------
+   "Ask anything about menu…" told you the field existed and nothing else.
+   These cycle through prompts the parser genuinely understands — a quantity,
+   a dish name, a constraint — so the hint teaches the grammar instead of
+   describing the box. A placeholder attribute can't animate, so this is a
+   real element sitting in the same place, clipped to one line, and it stops
+   dead the moment you focus: motion under a caret is a distraction. */
+.ph{position:absolute;left:15px;right:96px;top:50%;height:22px;margin-top:-11px;
+  overflow:hidden;pointer-events:none;z-index:1;
+  transition:opacity .18s ease;}
+.ph.off{opacity:0;}
+.ph span{position:absolute;inset:0;display:flex;align-items:center;
+  font-size:15px;line-height:22px;color:var(--text-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cbt{width:40px;height:40px;flex:0 0 40px;border-radius:48px;display:grid;place-items:center;
+  background:var(--glass);border:1px solid var(--line);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
+.cbt svg{width:20px;height:20px;fill:currentColor;}
+.cbt.rec{background:var(--brand);color:var(--brand-ink);border-color:transparent;}
+.snd{width:40px;height:40px;flex:0 0 40px;border-radius:48px;display:grid;place-items:center;
+  background:var(--brand);color:var(--brand-ink);border:1px solid rgba(255,255,255,.12);}
+.snd svg{width:20px;height:20px;fill:currentColor;}
+.snd:disabled{opacity:.45;}
+
+.tst{position:fixed;left:50%;bottom:calc(140px + var(--safe-b));z-index:60;
+  transform:translate(-50%,14px);padding:10px 15px;border-radius:var(--r-pill);
+  background:var(--text);color:var(--bg);font-size:13px;font-weight:500;
+  opacity:0;pointer-events:none;display:flex;align-items:center;gap:7px;
+  max-width:calc(100% - 32px);min-width:0;}
+.tst svg{width:15px;height:15px;fill:currentColor;flex:0 0 15px;}
+.tst span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fly{position:fixed;z-index:70;pointer-events:none;width:52px;height:52px;
+  border-radius:13px;object-fit:cover;}
+
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px;}
+.th:focus{outline:none;}
+
+
+/* ==========================================================================
+   FROM FIGMA 1:30 — the AI surface treatment for dark theme.
+   A lavender→violet gradient edge over a translucent fill, done with the
+   double-background trick (padding-box fill + border-box gradient) so the
+   1px edge is a real gradient rather than a flat approximation.
+   Orange stays reserved for YOU: user bubbles and every commit action.
+   ========================================================================== */
+:root{
+  /* The Figma edge ran blue -> violet, which put a cold cast on every AI
+     surface and fought the warm food photography sitting right next to it.
+     Same idea, warmer axis: a near-neutral highlight easing into a low
+     ember of the brand. It still reads as "the assistant", it just belongs
+     in a restaurant now. */
+  --ai-a:rgba(255,255,255,.18);
+  --ai-b:rgba(243,106,32,.34);
+  --ai-glow:0 1px 22px rgba(243,106,32,.06);
+  --ai-fill:rgba(22,23,27,.84);
+}
+/* Light deliberately defines no --ai-* of its own. Every consumer of those
+   tokens — the gradient edge, the glow, the translucent fill — is overridden
+   further down for light, so a light copy of them would be dead weight that
+   still reads as orange to anyone auditing the file. */
+.bub:not(.bub--u),.think,.w{
+  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
+             linear-gradient(135deg,var(--ai-a) 0%,var(--ai-b) 100%) border-box;
+  border:1px solid transparent;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:var(--ai-glow);
+}
+/* ==========================================================================
+   LIGHT THEME — surface, not stroke.
+
+   Everything in this block exists because light was borrowing dark's
+   grammar. On a dark ground a 1px edge is how an object separates itself;
+   on a warm near-white ground that same edge just draws a box around the
+   content, and once every bubble, widget and card has one the screen is
+   nothing but rectangles. So the strokes come off the AI surfaces, the
+   ground drops far enough for white to float on it, and warm shadow does
+   the separating.
+
+   The second half is the accent. Orange was on the card edge, the selected
+   pill, the live ring, the add button, the chip and the badge — six things
+   all shouting "press me" on one screen, which means none of them did.
+   Orange is now the button you're meant to press, and nothing else.
+   Selections resolve to near-black: unambiguous, and it costs no accent.
+   ========================================================================== */
+[data-theme='light'] .bub:not(.bub--u),
+[data-theme='light'] .think,
+[data-theme='light'] .w{
+  background:var(--card);border:1px solid transparent;box-shadow:var(--sh-2);
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+/* The one waiting on you gets lifted and warmed rather than outlined. */
+[data-theme='light'] .w--hot{
+  background:#FFFDFB;border-color:transparent;box-shadow:var(--sh-3);}
+[data-theme='light'] .w.done{
+  background:var(--card-2);border-color:transparent!important;box-shadow:var(--sh-1);}
+[data-theme='light'] .fc{border-color:transparent;box-shadow:var(--sh-2);}
+
+/* Selected states. */
+[data-theme='light'] .ob[aria-pressed='true']{
+  background:var(--text);border-color:var(--text);color:#fff;}
+[data-theme='light'] .ob{background:var(--field);}
+[data-theme='light'] .ob[aria-pressed='true'] small{color:rgba(255,255,255,.72);}
+[data-theme='light'] .ob[aria-pressed='true'] small{color:rgba(255,255,255,.7);}
+[data-theme='light'] .cr[aria-pressed='true']{
+  border-color:var(--line-strong);background:var(--glass);}
+[data-theme='light'] .cr[aria-pressed='true'] .bx{background:var(--text);border-color:var(--text);}
+[data-theme='light'] .cr[aria-pressed='true'] .rd{border-color:var(--text);}
+[data-theme='light'] .cr[aria-pressed='true'] .rd::after{background:var(--text);}
+[data-theme='light'] .cats .chip[aria-pressed='true']{
+  background:var(--text);border-color:var(--text);color:#fff;}
+
+/* Former accents, demoted. */
+[data-theme='light'] .chip--b{
+  background:#FDF5EF;border-color:rgba(178,106,52,.26);color:var(--text);}
+[data-theme='light'] .dots i{background:var(--text-3);}
+[data-theme='light'] .lk{color:var(--text-2);}
+[data-theme='light'] .amb i{background:rgba(120,86,50,.045);}
+[data-theme='light'] .ch.now{background:var(--glass-2);}
+[data-theme='light'] .sg__x{border-color:var(--line-strong);color:var(--text-2);}
+/* The AI-pick badge sits on a photograph, where white glass reads cleaner
+   than a colour block and still lets the brand carry in the mark itself. */
+[data-theme='light'] .tag--ai{
+  background:rgba(255,255,255,.93);color:#BC4708;border-color:rgba(255,255,255,.7);}
+.bub:not(.bub--u){border-radius:18px;border-top-left-radius:6px;letter-spacing:-.24px;}
+.think{border-radius:18px;border-top-left-radius:6px;}
+.w--hot{box-shadow:0 0 26px rgba(243,106,32,.12);
+  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
+             linear-gradient(135deg,rgba(243,106,32,.62),rgba(243,106,32,.22)) border-box;}
+
+/* ==========================================================================
+   THINKING — third pass. No box, no skeleton, a mesh gradient instead.
+
+   The card version failed three ways at once. It was a bordered surface
+   sitting between two other bordered surfaces, so "working on it" looked
+   like "another widget arrived". Its fill was hard-coded dark, which is
+   exactly why it stayed a black rectangle in light mode. And the ghost
+   cards underneath were promising a carousel that plenty of answers never
+   deliver — a skeleton that lies is worse than no skeleton.
+
+   What's here now is four soft colour fields, heavily blurred, drifting on
+   periods that don't divide into each other, with the word floating on top
+   and nothing containing any of it. Every colour is a theme token, so light
+   mode is warm daylight and dark mode is embers — same gesture, two
+   temperatures.
+   ========================================================================== */
+/* --thk-h is measured in JS: the thread's visible height minus the message
+   above it. The fallback matters — with GSAP or JS half-loaded the panel
+   still has to be a sensible size rather than collapsing to its text. */
+.thk{position:relative;padding:40px var(--pad) 36px;min-width:0;
+  min-height:var(--thk-h,58dvh);
+  display:grid;place-items:center;overflow:hidden;isolation:isolate;}
+
+/* The mask is load-bearing, not polish. The fields are drawn larger than the
+   panel so they have room to drift, which means `overflow:hidden` would slice
+   straight through solid colour and leave a hard horizontal edge — a box,
+   which is the exact thing we just removed. Feathering the whole layer to
+   nothing lets it bleed into the thread instead. */
+/* Two things were making this read as a rectangle rather than a field.
+
+   The blobs were solid circles: blurring a hard-edged shape still leaves a
+   defined boundary, so four of them tile into something with corners. They
+   are radial gradients fading to transparent now — soft before the blur
+   even runs.
+
+   And the mask was radial, which on a tall panel draws a tall ellipse: a
+   closed shape, which is exactly what a rectangle is. The mask is vertical
+   only now. The field bleeds off the left and right edges of the phone and
+   fades out top and bottom, so it has no outline anywhere to read as an
+   object sitting on the screen. */
+.thk__mesh{position:absolute;inset:-16% -34%;z-index:0;pointer-events:none;
+  filter:blur(58px);opacity:.92;will-change:transform;
+  -webkit-mask:linear-gradient(180deg,transparent 0%,#000 20%,#000 72%,transparent 100%);
+  mask:linear-gradient(180deg,transparent 0%,#000 20%,#000 72%,transparent 100%);}
+.thk__mesh i{position:absolute;display:block;will-change:transform;}
+.thk__mesh i:nth-child(1){left:-4%;top:-2%;width:66%;height:62%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-1),transparent 72%);}
+.thk__mesh i:nth-child(2){right:-8%;top:12%;width:62%;height:54%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-2),transparent 74%);}
+.thk__mesh i:nth-child(3){left:6%;bottom:2%;width:70%;height:58%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-3),transparent 72%);}
+.thk__mesh i:nth-child(4){right:-2%;bottom:-4%;width:56%;height:50%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-4),transparent 74%);}
+:root{
+  --mesh-1:rgba(243,106,32,.40);
+  --mesh-2:rgba(242,170,131,.26);
+  --mesh-3:rgba(120,64,180,.24);
+  --mesh-4:rgba(255,196,120,.24);
+}
+[data-theme='light']{
+  /* Higher key and lower saturation: on a warm near-white ground the dark
+     mix turns to mud, and a blurred field at 40% alpha reads as a stain. */
+  --mesh-1:rgba(243,106,32,.34);
+  --mesh-2:rgba(255,190,140,.50);
+  --mesh-3:rgba(198,164,232,.34);
+  --mesh-4:rgba(255,222,168,.54);
+}
+@media (prefers-reduced-motion:reduce){ .thk__mesh{filter:blur(64px);} }
+
+.thk__top{position:relative;z-index:2;display:flex;flex-direction:column;
+  align-items:center;gap:15px;width:100%;min-width:0;}
+.thk__orb{position:relative;width:48px;height:48px;border-radius:24px;
+  background:linear-gradient(135deg,#F36A20,#F2CAB5 50%,#F2AA83);
+  display:grid;place-items:center;box-shadow:0 0 26px rgba(243,106,32,.3);}
+.thk__orb svg{width:20px;height:20px;fill:#3A1400;position:relative;z-index:2;}
+.thk__r{position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(243,106,32,.5);pointer-events:none;}
+
+.thk__w{position:relative;height:24px;width:100%;min-width:0;overflow:hidden;}
+.thk__w span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:500;letter-spacing:-.01em;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:6px;}
+
+
+/* ==========================================================================
+   DYNAMIC ISLAND — the header title IS the control. The history panel grows
+   out of it: same radius family, springy on both axes, content arriving
+   after the shape settles. Closing a chat squashes the row and the island
+   re-settles to its new height, so the panel feels like one object.
+   ========================================================================== */
+/* ---------------------------- chat switcher ------------------------------
+   This used to be the chat title with a chevron beside it, which reads as a
+   heading that happens to have an arrow — nobody taps a heading. It's a
+   control now: its own bordered surface, and the chat count sitting inside
+   it so you know there's more than one before you go looking.
+   -------------------------------------------------------------------------- */
+.ttl{padding:3px 7px 3px 10px;border-radius:var(--r-pill);
+  background:var(--glass);border:1px solid var(--line-soft);
+  transition:background .18s,border-color .18s;}
+.ttl:hover,.ttl.open{background:var(--glass-2);border-color:var(--line);}
+.ttl__n{display:none;flex:0 0 auto;min-width:17px;height:17px;padding:0 5px;
+  border-radius:99px;background:var(--glass-2);border:1px solid var(--line-soft);
+  font-size:10.5px;font-weight:600;line-height:15px;text-align:center;
+  color:var(--text-2);font-variant-numeric:tabular-nums;}
+.ttl--many .ttl__n{display:block;}
+.ttl--many{border-color:var(--line);}
+.ttl{display:flex;align-items:center;gap:5px;min-width:0;text-align:left;color:inherit;}
+.ttl svg{width:15px;height:15px;fill:var(--text-2);flex:0 0 auto;transition:transform .3s;}
+.ttl.open svg{transform:rotate(180deg);}
+
+.islScrim{position:fixed;inset:0;z-index:28;background:rgba(0,0,0,.55);
+  opacity:0;visibility:hidden;backdrop-filter:blur(2px);}
+.islScrim.on{opacity:1;visibility:visible;}
+
+.isl{
+  /* fixed + centred, clamped to the app width. It sits outside .app, so
+     position:absolute resolved against the page and spilled the full window
+     width on desktop. */
+  position:fixed;left:50%;transform:translateX(-50%);
+  width:calc(min(100vw,400px) - var(--pad) * 2);
+  top:calc(56px + var(--safe-t));z-index:30;
+  border-radius:24px;overflow:hidden;
+  background:var(--card-2);border:1px solid var(--line);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+  visibility:hidden;transform-origin:top center;
+  max-height:min(66dvh,520px);display:flex;flex-direction:column;min-width:0;
+}
+.isl.on{visibility:visible;}
+.isl__h{display:flex;align-items:center;gap:8px;padding:13px 14px 9px;flex:0 0 auto;min-width:0;}
+.isl__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text-2);}
+.isl__l{overflow-y:auto;padding:0 10px 10px;flex:1 1 auto;scrollbar-width:none;min-width:0;}
+.isl__l::-webkit-scrollbar{display:none;}
+
+.ch{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border-radius:14px;
+  text-align:left;min-width:0;background:transparent;transition:background .18s;}
+.ch:hover{background:var(--glass);}
+.ch.now{background:rgba(243,106,32,.12);}
+.ch__i{width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:var(--glass-2);
+  display:grid;place-items:center;position:relative;}
+.ch__i svg{width:16px;height:16px;}
+.ch.now .ch__i{background:linear-gradient(135deg,#F36A20,#F2AA83);}
+.ch__b{flex:1;min-width:0;}
+.ch__n{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ch__d{font-size:11px;color:var(--text-2);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ch__x{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;
+  color:var(--text-3);opacity:.7;}
+.ch__x svg{width:14px;height:14px;fill:currentColor;}
+.ch__x:hover{background:var(--glass-2);opacity:1;}
+.ch__n .cnt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
+  background:var(--brand);color:var(--brand-ink);font-size:10px;font-weight:600;vertical-align:1px;}
+.isl__new{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border-radius:14px;
+  text-align:left;min-width:0;margin-bottom:2px;}
+.isl__new .ch__i{background:var(--brand);color:var(--brand-ink);}
+.isl__new .ch__i svg{fill:currentColor;}
+
+
+/* --------------------------------------------------------------------------
+   FOCUS MODE — while a widget wants an answer, the suggestion chips go away.
+
+   Leaving them up offered two competing ways forward: fill the form, or tap
+   a chip that abandons it. The chips slide out, the live widget gets a ring,
+   and everything above it dims slightly so the one thing you're being asked
+   is the one thing lit.
+   -------------------------------------------------------------------------- */
+.chiprow{transition:opacity .22s ease,transform .22s ease,max-height .24s ease;
+  max-height:52px;overflow:hidden;}
+.chiprow.hid{opacity:0;transform:translateY(8px);max-height:0;
+  padding-top:0;padding-bottom:0;pointer-events:none;}
+
+.w--live{box-shadow:0 0 0 3px rgba(243,106,32,.14);}
+/* In light the dimming of everything else already says which one is live,
+   so the ring is redundant — lift it instead of ringing it. */
+[data-theme='light'] .w--live{box-shadow:var(--sh-3);}
+.th.focusing > *:not(.w--live){opacity:.42;transition:opacity .3s ease;}
+.th.focusing .w--live{opacity:1;}
+
+/* The save row reads as one committed action, with a quiet escape beside it. */
+.w__save{display:flex;align-items:center;gap:9px;min-width:0;}
+.w__save .b--p{flex:1;}
+.w__skip{flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-2);
+  padding:0 10px;min-height:44px;display:inline-flex;align-items:center;}
+.w__skip:hover{color:var(--text);}
+.w__hint{font-size:11px;color:var(--text-3);margin-top:9px;display:flex;
+  align-items:center;gap:5px;min-width:0;}
+.w__hint svg{width:12px;height:12px;fill:currentColor;flex:0 0 12px;}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+}

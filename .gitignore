@@ -1,0 +1,6 @@
+.DS_Store
+node_modules/
+.netlify/
+
+# the double-click helper, not part of the site
+PUSH TO GITHUB.command
