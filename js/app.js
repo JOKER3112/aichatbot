@@ -4,7 +4,7 @@
 'use strict';
 
 const UI=(function(){
-  let th,cp,inp,snd,bar,pill,mark,tst,chipRow;
+  let th,cp,inp,snd,cartBtn,pill,mark,tst;
   let bottom=true,busy=false,payM='upi',cat='All',sug={},tapped=null,lastSug=null,focused=null;
   const drafts={};                 // widget id -> working config
   const now=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -14,13 +14,20 @@ const UI=(function(){
 
   /* ------------------------------------------------------------------ boot */
   function init(){
-    th=$('#th');cp=$('#cp');inp=$('#inp');snd=$('#send');bar=$('#bar');
-    pill=$('#pill');mark=$('#mark');tst=$('#tst');chipRow=$('#chips');
+    th=$('#th');cp=$('#cp');inp=$('#inp');snd=$('#send');cartBtn=$('#cartBtn');
+    /* The cart badge lives on the composer button now. The header icon,
+       the composer button and the review strip were three doors to the
+       same room on one screen; the composer one is the only one your
+       thumb can reach without moving. */
+    pill=$('#cartN');mark=$('#mark');tst=$('#tst');
 
     theme();
-    inp.addEventListener('focus',()=>{cp.classList.add('on');ph.stop();});
+    inp.addEventListener('focus',()=>{cp.classList.add('on');ph.stop();M.composer(cp,true);});
+    /* Only fold back up if there's nothing to lose. Collapsing under a
+       half-typed message would move the controls out from under the thumb
+       mid-sentence. */
     inp.addEventListener('blur',()=>{cp.classList.remove('on');
-      if(!inp.value.trim()&&!rec) ph.start();});
+      if(!inp.value.trim()&&!rec){ ph.start(); M.composer(cp,false); }});
     inp.addEventListener('input',()=>{
       inp.style.height='auto';
       inp.style.height=Math.min(inp.scrollHeight,80)+'px';
@@ -38,7 +45,7 @@ const UI=(function(){
     M.idle(mark);
     Cart.sub(onCart);
 
-    Chats.make('New order');
+    Chats.make();
     document.getElementById('ttl').addEventListener('click',()=>{
       M.tap(document.getElementById('ttl'),.96);
       document.getElementById('isl').classList.contains('on')?islandClose():islandOpen();
@@ -90,16 +97,28 @@ const UI=(function(){
       AI.reset();
       syncTitle();
       end(true);
-      if(G) G.fromTo(th,{opacity:0,y:10},{opacity:1,y:0,duration:.36,ease:'power3.out'});
     };
+    /* The old version fired the panel close and the thread swap at the same
+       instant, so two things moved past each other and the whole switch read
+       as a stutter. It's one timeline now: the panel gets out of the way
+       first, the outgoing thread settles back and dissolves rather than
+       sliding, and the incoming one rises into place. Slightly longer overall
+       and it feels much faster, because nothing is competing. */
     islandClose();
-    if(G) G.to(th,{opacity:0,y:-8,duration:.2,ease:'power2.in',onComplete:paint});
-    else paint();
+    if(!G){ paint(); return; }
+    G.killTweensOf(th);
+    G.timeline()
+      .to(th,{opacity:0,y:-6,scale:.985,filter:'blur(3px)',
+              duration:.26,ease:'power2.in'},.06)
+      .add(paint)
+      .fromTo(th,{opacity:0,y:14,scale:.99,filter:'blur(4px)'},
+                 {opacity:1,y:0,scale:1,filter:'blur(0px)',
+                  duration:.46,ease:'power3.out',clearProps:'filter,transform'});
   }
 
   function newChat(){
     Chats.save(th);
-    Chats.make('New order');
+    Chats.make();
     Cart.clear();AI.reset();sug={};lastSug=null;
     const G=M.g();
     const paint=()=>{th.innerHTML='';welcome();syncTitle();
@@ -129,6 +148,9 @@ const UI=(function(){
     const v=inp.value.trim();
     if(!v||busy) return;
     inp.value='';inp.style.height='auto';snd.disabled=true;
+    inp.blur();
+    if(cp.classList.contains('open')) M.composer(cp,false);
+    ph.start();
     send(v);
   }
   function end(force){
@@ -148,6 +170,16 @@ const UI=(function(){
     const box=document.getElementById('ph'), line=box.querySelector('span');
     let i=0, t=null, on=false;
     line.textContent=PROMPTS[0];
+    /* Clearing the interval was never enough. A rotation is a 0.6s timeline,
+       so stopping mid-flight left the line parked at y:-16 or opacity:0 —
+       and the fade-out then ran on top of a half-finished slide, which is
+       the flicker you get on focus. Kill the tween AND reset the line, so
+       every stop lands the same way. */
+    function reset(){
+      const G=M.g();
+      if(G){ G.killTweensOf(line); G.set(line,{y:0,opacity:1,clearProps:'transform'}); }
+      else { line.style.transform=''; line.style.opacity=''; }
+    }
     function step(){
       i=(i+1)%PROMPTS.length;
       const G=M.g();
@@ -158,12 +190,14 @@ const UI=(function(){
         .fromTo(line,{y:16,opacity:0},{y:0,opacity:1,duration:.36,ease:'power3.out'});
     }
     return {
-      start(){ if(on)return; on=true; box.classList.remove('off'); t=setInterval(step,2600); },
-      stop(){ on=false; box.classList.add('off'); if(t){clearInterval(t);t=null;} },
-      toggle(show){ show?this.start():this.stop(); },
+      start(){ if(on)return; on=true; reset(); box.classList.remove('off'); t=setInterval(step,2600); },
+      stop(){ on=false; if(t){clearInterval(t);t=null;} box.classList.add('off'); reset(); },
+      /* Never restarts while the caret is in the field — deleting your text
+         used to bring the carousel back underneath it. */
+      toggle(show){ if(!show){ this.stop(); return; }
+        if(document.activeElement!==inp) this.start(); },
       /* Voice mode borrows the same line rather than fighting it. */
-      say(txt){ this.stop(); box.classList.remove('off'); line.textContent=txt;
-                const G=M.g(); if(G) G.set(line,{y:0,opacity:1}); },
+      say(txt){ this.stop(); box.classList.remove('off'); line.textContent=txt; reset(); },
     };
   })();
 
@@ -180,9 +214,9 @@ const UI=(function(){
     const el=document.createElement('div');
     el.className='wel';
     el.innerHTML=
-      '<div class="m">'+
+      '<div class="m m--ai">'+
         '<div class="mark mark--sm">'+IC.spark+'</div>'+
-        '<div class="bub">'+
+        '<div class="say">'+
           '<em class="hi">Vanakkam!</em> I\u2019m <b class="nm">Petpooja AI</b>, '+
           'your virtual captain. What are you eating today?'+
           '<div class="t">'+now()+'</div>'+
@@ -210,27 +244,35 @@ const UI=(function(){
        them said the same thing twice, and two rows of prompts on a blank
        page is a menu, not an opening. */
     setChips([]);
-    document.getElementById('chips').classList.add('hid');
   }
 
   function userBub(text){
-    const w=th.querySelector('.wel');
-    if(w){ w.remove(); document.getElementById('chips').classList.remove('hid'); }
+    const w=th.querySelector('.wel'); if(w) w.remove();
     const el=document.createElement('div');
     el.className='m m--u';
     el.innerHTML='<div class="bub bub--u">'+esc(text)+'<div class="t">'+now()+'</div></div>';
     th.appendChild(el);bottom=true;return el;
   }
+  /* The assistant doesn't speak in a bubble any more. A bubble is a container
+     for one side of a two-sided exchange — it earns its keep on the message
+     YOU sent, which is short and needs to be visually claimed. The reply is
+     often a paragraph, a list, or the label on a widget, and boxing all of
+     that just adds an edge inside an edge.
+
+     Mark on its own line, answer underneath, full width. It also dissolves
+     the alignment problem: the reply now starts at the same left edge as
+     every card and widget, so there's one column instead of two. */
   function aiBub(h){
     const el=document.createElement('div');
-    el.className='m';
-    el.innerHTML='<div class="mark mark--sm">'+IC.spark+'</div><div class="bub">'+h+'</div>';
+    el.className='m m--ai';
+    el.innerHTML='<div class="mark mark--sm">'+IC.spark+'</div><div class="say">'+h+'</div>';
     th.appendChild(el);return el;
   }
   let thinkStop=null;
   function thinking(on){
     const ex=document.getElementById('thk');
     if(!on){
+      M.mesh(false);
       if(thinkStop){thinkStop();thinkStop=null;}
       if(ex){
         const G=M.g();
@@ -241,6 +283,7 @@ const UI=(function(){
     }
     if(ex) return;
     M.busy(mark);
+    M.mesh(true);
     const el=thinkPanel();
     /* Fill the screen from the last thing said down to the composer, rather
        than sitting in a fixed 172px slot. Measured, not guessed: the thread's
@@ -783,31 +826,49 @@ const UI=(function(){
     th.querySelectorAll('.w--live').forEach(x=>x.classList.remove('w--live'));
     el.classList.add('w--live');
     th.classList.add('focusing');
-    chipRow.classList.add('hid');
+    const cr=chipEl(); if(cr) cr.classList.add('hid');
     focused=id;
   }
   function focusOff(){
     th.classList.remove('focusing');
     th.querySelectorAll('.w--live').forEach(x=>x.classList.remove('w--live'));
-    chipRow.classList.remove('hid');
+    const cr=chipEl(); if(cr) cr.classList.remove('hid');
     focused=null;
   }
 
+  /* Suggestions belong to the message that offered them, not to the
+     composer. Parked above the field they were a permanent shelf that had
+     nothing to do with whatever was on screen; in the thread they read as
+     the assistant's own follow-up, they scroll away with the reply that
+     produced them, and the composer gets its height back.
+
+     Only ever one row: a new set replaces the old one rather than leaving
+     a trail of stale offers up the thread. */
+  function chipEl(){ return th.querySelector('.sug'); }
   function setChips(l){
+    const old=chipEl();
     /* Never re-show chips over a widget that still wants an answer. */
     if(focused&&document.getElementById(focused)&&
        !document.getElementById(focused).classList.contains('done')){
-      chipRow.innerHTML=''; return;
+      if(old) old.remove(); return;
     }
-    if(!l||!l.length){chipRow.innerHTML='';return;}
-    if(tapped){
-      l=l.filter(c=>c!==tapped);tapped=null;
-      if(!l.length){chipRow.innerHTML='';return;}
+    if(tapped&&l&&l.length){
+      l=l.filter(c=>c!==tapped); tapped=null;
     }
-    chipRow.innerHTML=l.map(c=>'<button class="chip" data-say="'+esc(c)+'">'+esc(c)+'</button>').join('');
+    if(!l||!l.length){ if(old) old.remove(); return; }
+
+    const row=document.createElement('div');
+    row.className='sug';
+    row.setAttribute('role','group');
+    row.setAttribute('aria-label','Suggestions');
+    row.innerHTML=l.map(c=>'<button class="chip" data-say="'+esc(c)+'">'+esc(c)+'</button>').join('');
+    if(old) old.remove();
+    th.appendChild(row);
     const G=M.g();
-    if(G) G.from(chipRow.children,{opacity:0,y:7,duration:.28,stagger:.04});
+    if(G) G.from(row.children,{opacity:0,y:7,duration:.28,stagger:.04,clearProps:'transform'});
+    end();                       /* scroll them into view, they are the point */
   }
+
 
   /* --------------------------------------------------------- conversation */
   function send(text,chip){
@@ -887,35 +948,24 @@ const UI=(function(){
     });
   }
 
-  /* ------------------------------------------------------------- cart bar */
+  /* ---------------------------------------------------------- cart badge */
   let prevN=0;
   function onCart(s){
     const t=s.t;
+    /* Written first, animated after. The badge is correct with GSAP absent,
+       with the tween mid-flight, or if the tween never runs at all. */
     pill.textContent=t.n;
-    pill.classList.toggle('on',t.n>0);
-    if(t.n!==prevN&&t.n>0) M.pop(pill);
+    cartBtn.classList.toggle('has',t.n>0);
+    if(t.n>prevN) M.added(cartBtn,pill);
     prevN=t.n;
-
-    const b1=document.getElementById('bar1'),b2=document.getElementById('bar2'),im=document.getElementById('barIm');
-    if(t.n>0){
-      const was=!bar.classList.contains('on');
-      bar.classList.add('on');
-      const html=s.lines.slice(0,3).map(l=>'<img '+Menu.img(l.it)+'>').join('');
-      if(im.innerHTML!==html) im.innerHTML=html;
-      b1.textContent=t.n+' item'+(t.n===1?'':'s')+' · '+R$(t.total);
-      b2.textContent=s.ful.mode?(s.ready?'Ready to send':'Needs your details'):'Tap to review';
-      if(was) M.bar(bar,1);
-    }else if(bar.classList.contains('on')){
-      M.bar(bar,0);
-      setTimeout(()=>bar.classList.remove('on'),240);
-    }
   }
+
 
   /* -------------------------------------------------------------- adding */
   function addIt(cfg,btn,keep){
     AI.setSig(Cart.add(cfg));AI.setCfg(cfg);
     const host=btn.closest('.fc,.sg,.w,.mr'), img=host&&host.querySelector('img');
-    if(img) M.fly(img,bar.classList.contains('on')?bar:pill,img.currentSrc||img.src);
+    if(img) M.fly(img,cartBtn,img.currentSrc||img.src);
     M.tap(btn,.9);
     if(btn.classList.contains('sg')){
       /* A suggestion row is the whole button, so confirming can't overwrite
@@ -1005,7 +1055,7 @@ const UI=(function(){
           M.tap(b,.94);
           b.textContent='Added';b.classList.add('b--ok');b.disabled=true;
           const im=b.closest('.cb').querySelector('img');
-          if(im) M.fly(im,bar.classList.contains('on')?bar:pill,im.currentSrc||im.src);
+          if(im) M.fly(im,cartBtn,im.currentSrc||im.src);
           toast(c.n+' added \u00b7 saved '+R$(c.off));
           setChips(AI.chips());
           break;
@@ -1053,7 +1103,7 @@ const UI=(function(){
             collapse(wid,Menu.item(cfg.id).n+' · '+R$(Menu.price(cfg)));
             toast(Menu.item(cfg.id).n+' added');
             const img=document.getElementById(wid).querySelector('img');
-            if(img) M.fly(img,bar.classList.contains('on')?bar:pill,img.currentSrc||img.src);
+            if(img) M.fly(img,cartBtn,img.currentSrc||img.src);
             suggest(cfg);
           }
           setChips(AI.chips());end(); break;

@@ -29,7 +29,7 @@
   --card:#131519;
   --card-2:#191C21;
   --field:#0E1013;
-  --header:rgba(8,9,11,.7);
+  --header:rgba(8,9,11,.92);
   --composer:rgba(18,20,26,.72);
 
   --text:#F7F7F8;
@@ -53,8 +53,13 @@
      from the avatar rather than typed in, so shrinking the avatar moves
      every card with it and nothing drifts out of alignment. */
   --ava:22px;
-  --ava-gap:8px;
-  --lane:calc(var(--pad) + var(--ava) + var(--ava-gap));
+  --ava-gap:7px;
+  /* The mark used to sit BESIDE the reply, so every card had to be indented
+     past it to line up. It sits above the reply now, which means the agent's
+     column starts at the page padding and --lane collapses into it. Kept as
+     a name rather than inlined: one place to change if the mark ever moves
+     back alongside. */
+  --lane:var(--pad);
 }
 
 [data-theme='light']{
@@ -74,7 +79,7 @@
   --glass:rgba(28,20,12,.04); --glass-2:rgba(28,20,12,.06);
   --line:rgba(28,20,12,.11); --line-soft:rgba(28,20,12,.055); --line-strong:rgba(28,20,12,.22);
   --card:#FFFFFF; --card-2:#FAF8F4; --field:#FFFFFF;
-  --header:rgba(241,237,231,.86); --composer:rgba(255,255,255,.9);
+  --header:rgba(241,237,231,.95); --composer:rgba(255,255,255,.9);
   /* --text-3 was #8A8178 — 3.82:1 on white, under the 4.5 AA bar, and it
      carries real content here: the resting field label, the add-on
      description, the choices line under Add. Darkened until it clears AA
@@ -91,6 +96,15 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;min-width:0;}
+
+/* ------------------------------- icons ---------------------------------
+   Every icon is drawn as an outline, so the paint has to land on the stroke.
+   Scattered component rules all say `fill:currentColor`, which would flood
+   an outline solid — this is the one place !important is the right tool: a
+   cross-cutting invariant that has to beat rules it doesn't know about.
+   Colour still travels the normal way, through currentColor. */
+svg[data-i]{fill:none!important;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
 
 html,body{margin:0;padding:0;height:100%;width:100%;max-width:100%;
   overflow-x:hidden;overscroll-behavior-y:none;}
@@ -110,16 +124,48 @@ img{display:block;max-width:100%;}
     border:1px solid var(--line-soft);box-shadow:0 30px 80px rgba(0,0,0,.5);}
 }
 
-.amb{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
-.amb i{position:absolute;width:280px;height:280px;border-radius:50%;
-  background:rgba(243,106,32,.05);filter:blur(49px);}
-.amb i:nth-child(1){left:-169px;top:121px;}
-.amb i:nth-child(2){right:-169px;top:454px;}
+/* ============================ THE MESH ==================================
+   Four soft colour fields behind the entire app — behind the thread, behind
+   the cards, behind the translucent composer, which is why the composer's
+   backdrop-blur suddenly has something worth blurring.
+
+   It was a panel-sized effect before, sitting inside the thinking state.
+   Moving it to app level costs nothing and changes the whole feel: the
+   screen warms up when the assistant is working instead of one rectangle in
+   the middle of it doing something the rest of the screen isn't.
+
+   Two intensities. Resting it's a faint ambient wash and nothing animates —
+   a perpetual loop is a battery cost for something nobody is looking at.
+   Thinking raises the opacity and starts the drift.
+   ======================================================================== */
+.amb{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
+  opacity:.72;transition:opacity .6s ease;
+  filter:blur(58px);
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);
+  mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);}
+.amb i{position:absolute;display:block;will-change:transform;}
+.amb i:nth-child(1){left:-14%;top:-6%;width:70%;height:44%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-1),transparent 72%);}
+.amb i:nth-child(2){right:-16%;top:18%;width:66%;height:38%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-2),transparent 74%);}
+.amb i:nth-child(3){left:-6%;bottom:8%;width:74%;height:42%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-3),transparent 72%);}
+.amb i:nth-child(4){right:-10%;bottom:-8%;width:60%;height:36%;
+  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-4),transparent 74%);}
+/* Working. The whole screen, not one panel in the middle of it. Both
+   themes share these two levels — the per-theme alphas above already do
+   all the dimming, and a light-only override on top of them was part of
+   why light vanished the first time. */
+.app.busy .amb{opacity:1;}
 
 /* ================================ HEADER ================================ */
+/* .7 alpha over a scrolling thread meant a card's orange Add button read
+   straight through the header and collided with the title — the blur softens
+   an image, it doesn't hide a saturated block. Nearly opaque now, with the
+   blur kept for the edge where content passes under it. */
 .hd{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;
   gap:10px;padding:calc(14px + var(--safe-t)) var(--pad) 14px;background:var(--header);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
   border-bottom:1px solid var(--line-soft);}
 .hd__l{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
 .hd__r{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
@@ -142,10 +188,9 @@ img{display:block;max-width:100%;}
 .mark--sm{width:var(--ava);height:var(--ava);flex-basis:var(--ava);border-radius:50%;}
 .mark--sm::after{inset:2px;border-radius:50%;}
 .mark--sm svg{width:10px;height:10px;}
-/* flex-start puts the mark level with the top of the bubble box, which
-   reads as high because the bubble has 11px of padding above its text.
-   3px down lands it on the first line instead. */
-.m>.mark--sm{margin-top:3px;}
+/* On its own row now, so it needs no optical nudge — but it does need to
+   not stretch to the row's full width under align-items:stretch. */
+.m--ai>.mark--sm{align-self:flex-start;}
 .mark--lg{width:64px;height:64px;flex-basis:64px;border-radius:32px;}
 .mark--lg::after{inset:5px;border-radius:27px;}
 .mark--lg svg{width:28px;height:28px;}
@@ -175,12 +220,13 @@ img{display:block;max-width:100%;}
    on purpose: a chat reads down from the top, and a centred opening line
    jumped upward the instant you replied to it. */
 .wel{padding:2px 0 8px;}
-.wel .bub{max-width:calc(100% - var(--ava) - var(--ava-gap));}
+.wel .say{max-width:34ch;}
 /* Only two words wear the brand: the greeting and the name. */
 .wel .hi,.wel .nm{font-style:normal;font-weight:600;color:var(--brand);}
+.wel .say{font-size:17px;line-height:1.45;}
 [data-theme='light'] .wel .hi,
 [data-theme='light'] .wel .nm{color:var(--brand-dark);}
-.wel .bub .t{margin-top:6px;font-size:11px;color:var(--text-3);}
+.wel .say .t{margin-top:8px;}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
   margin-top:14px;padding-left:var(--lane);padding-right:var(--pad);}
 .grid2 button{display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:10px 12px;
@@ -190,23 +236,45 @@ img{display:block;max-width:100%;}
 .grid2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* ------------------------------- messages ------------------------------- */
-.m{display:flex;gap:var(--ava-gap);align-items:flex-start;padding-inline:var(--pad);min-width:0;}
+/* ------------------------------- messages -------------------------------
+   Two different shapes on purpose. What YOU said is short and needs to be
+   claimed, so it keeps a bubble, right-aligned. What the assistant says is
+   often a paragraph or a list, and boxing that puts an edge inside an edge
+   — so the mark goes on its own line and the answer runs full width beneath
+   it, starting on the same left edge as every card and widget.
+   -------------------------------------------------------------------------- */
+/* --lane on the left everywhere, so the agent column can't drift apart. */
+.m{display:flex;gap:var(--ava-gap);align-items:flex-start;
+  padding-left:var(--lane);padding-right:var(--pad);min-width:0;}
 .m--u{justify-content:flex-end;}
-.bub{max-width:84%;min-width:0;padding:11px 14px;border-radius:var(--r-lg);
-  border-top-left-radius:6px;background:var(--card);border:1px solid var(--line-soft);
+.m--ai{flex-direction:column;align-items:stretch;gap:9px;}
+.say{font-size:15px;line-height:1.5;letter-spacing:-.1px;color:var(--text);
+  min-width:0;overflow-wrap:anywhere;word-break:break-word;}
+.say b{font-weight:600;}
+.say .sub{display:block;margin-top:5px;font-size:13px;color:var(--text-2);}
+.say .t{margin-top:7px;font-size:11px;color:var(--text-3);}
+/* Only the user speaks in a bubble now. */
+.bub{max-width:84%;min-width:0;padding:11px 14px;
   font-size:15px;line-height:1.45;overflow-wrap:anywhere;word-break:break-word;}
 .bub b{font-weight:600;}
-.bub .sub{display:block;margin-top:5px;font-size:13px;color:var(--text-2);}
 /* Orange bubble, white text — matches the badge in the Figma frame. */
-.bub--u{background:var(--brand);background-color:var(--brand);color:var(--brand-ink);border-color:transparent;
-  border-radius:var(--r-lg);border-top-right-radius:6px;font-weight:500;}
-.bub--u .t{display:flex;justify-content:flex-end;gap:3px;margin-top:3px;font-size:11px;opacity:.85;}
+/* Your message is a card with the warm gradient edge, not a slab of primary
+   orange. Solid brand on the thing YOU said was spending the loudest colour
+   in the system on the one element that never needs to be clicked — and it
+   put a second orange block on every screen that already had an orange
+   button. The edge says "this is yours" without shouting it. */
+.bub--u{background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
+        linear-gradient(215deg,var(--ai-b) 0%,var(--ai-a) 100%) border-box;
+  border:1px solid transparent;color:var(--text);font-weight:500;
+  border-radius:18px;border-top-right-radius:6px;
+  box-shadow:var(--ai-glow);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+[data-theme='light'] .bub--u{
+  background:var(--card);border:1px solid transparent;box-shadow:var(--sh-2);
+  backdrop-filter:none;-webkit-backdrop-filter:none;}
+.bub--u .t{display:flex;justify-content:flex-end;gap:3px;margin-top:4px;
+  font-size:11px;color:var(--text-3);}
 
-.think{display:inline-flex;align-items:center;gap:9px;padding:11px 14px;border-radius:var(--r-lg);
-  border-top-left-radius:6px;background:var(--card);border:1px solid var(--line-soft);
-  font-size:13px;color:var(--text-2);min-width:0;}
-.dots{display:inline-flex;gap:4px;flex:0 0 auto;}
-.dots i{width:5px;height:5px;border-radius:50%;background:var(--brand);}
 
 /* ============================== CHAT WIDGETS ============================
    Every step that used to be a bottom sheet is one of these. They sit in
@@ -233,7 +301,7 @@ img{display:block;max-width:100%;}
 .w.done .w__h,.w.done .w__b,.w.done .w__f{display:none;}
 .w.done .w__d{display:flex;}
 .w.done{border-color:var(--line-soft);}
-.w__d svg{width:15px;height:15px;fill:var(--veg);flex:0 0 15px;}
+.w__d svg{width:15px;height:15px;color:var(--veg);flex:0 0 15px;}
 .w__d .k{color:var(--text-2);flex:0 0 auto;}
 .w__d b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .w__d .go{margin-left:auto;flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-2);}
@@ -285,13 +353,13 @@ img{display:block;max-width:100%;}
 .bx{width:20px;height:20px;flex:0 0 20px;border-radius:6px;border:1.5px solid var(--line-strong);
   display:grid;place-items:center;}
 .cr[aria-pressed='true'] .bx{background:var(--brand);border-color:var(--brand);}
-.bx svg{width:12px;height:12px;fill:var(--brand-ink);opacity:0;}
+.bx svg{width:12px;height:12px;color:var(--brand-ink);opacity:0;}
 .cr[aria-pressed='true'] .bx svg{opacity:1;}
 .cr__n{flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cr__p{font-size:13px;font-weight:500;color:var(--text-2);flex:0 0 auto;}
 .cr__i{width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:var(--glass-2);
   display:grid;place-items:center;}
-.cr__i svg{width:17px;height:17px;fill:var(--text);}
+.cr__i svg{width:17px;height:17px;color:var(--text);}
 .cr__b{flex:1;min-width:0;}
 .cr__d{font-size:11px;color:var(--text-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rd{width:19px;height:19px;flex:0 0 19px;border-radius:50%;border:1.5px solid var(--line-strong);
@@ -381,7 +449,7 @@ img{display:block;max-width:100%;}
 .fl--tel .tick{position:absolute;right:12px;top:15px;width:18px;height:18px;
   border-radius:50%;background:var(--veg);display:grid;place-items:center;
   opacity:0;transform:scale(.5);pointer-events:none;}
-.fl--tel .tick svg{width:11px;height:11px;fill:#fff;}
+.fl--tel .tick svg{width:11px;height:11px;color:#fff;}
 .fl--tel.done .tick{opacity:1;transform:scale(1);}
 .fl--tel.done .cnt{opacity:0;}
 
@@ -390,9 +458,22 @@ img{display:block;max-width:100%;}
   border-radius:var(--r-pill);background:var(--glass);border:1px solid var(--line);
   font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;}
 .chip--b{border-color:rgba(243,106,32,.45);background:rgba(243,106,32,.12);color:var(--brand);}
-.chiprow{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;
-  padding:0 var(--pad) 2px;-webkit-overflow-scrolling:touch;min-width:0;}
-.chiprow::-webkit-scrollbar{display:none;}
+/* In the thread now, directly under the reply that offered them. Parked
+   above the composer they were a permanent shelf with no relationship to
+   what was on screen; here they read as the assistant's own follow-up and
+   they scroll away with the message that produced them.
+
+   Tight to the message above (-2px) and generous below, so they group with
+   the reply rather than floating between two of them. */
+.sug{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;min-width:0;
+  margin-top:-2px;padding:0 var(--pad) 4px var(--lane);
+  -webkit-overflow-scrolling:touch;}
+.sug::-webkit-scrollbar{display:none;}
+.sug .chip{min-height:34px;padding:0 13px;font-size:12.5px;}
+/* Focus mode still parks them, it just parks them where they now live. */
+.sug.hid{opacity:0;transform:translateY(6px);max-height:0;padding-block:0;
+  pointer-events:none;overflow:hidden;}
+.sug{transition:opacity .22s,transform .22s,max-height .24s;max-height:52px;}
 
 /* --------------------------------- rails --------------------------------- */
 .rail{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
@@ -543,14 +624,14 @@ img{display:block;max-width:100%;}
   background:var(--glass);border:1px dashed var(--line);
   transition:background .16s,border-color .16s;}
 .ntt:hover{background:var(--glass-2);}
-.ntt svg{width:14px;height:14px;flex:0 0 14px;fill:var(--text-3);}
+.ntt svg{width:14px;height:14px;flex:0 0 14px;color:var(--text-3);}
 .ntt__t{flex:1;min-width:0;font-size:12.5px;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ntt__a{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--text-2);}
 /* Set, it stops looking like an empty slot and starts looking like content. */
 .ntt--on{border-style:solid;border-color:var(--line-soft);background:var(--card-2);}
-.ntt--on svg{fill:var(--brand);}
-[data-theme='light'] .ntt--on svg{fill:var(--brand-dark);}
+.ntt--on svg{color:var(--brand);}
+[data-theme='light'] .ntt--on svg{color:var(--brand-dark);}
 .ntt--on .ntt__t{color:var(--text);}
 
 /* ------------------------------ note popover ------------------------------
@@ -581,8 +662,8 @@ img{display:block;max-width:100%;}
    asked for rather than another field — you're checking it, not editing it. */
 .ntl{display:flex;gap:8px;align-items:flex-start;margin-top:11px;padding:9px 11px;
   border-radius:12px;background:var(--glass);min-width:0;}
-.ntl svg{width:14px;height:14px;flex:0 0 14px;fill:var(--brand);margin-top:2px;}
-[data-theme='light'] .ntl svg{fill:var(--brand-dark);}
+.ntl svg{width:14px;height:14px;flex:0 0 14px;color:var(--brand);margin-top:2px;}
+[data-theme='light'] .ntl svg{color:var(--brand-dark);}
 .ntl span{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--text-2);
   overflow-wrap:anywhere;}
 .ntl b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.07em;
@@ -670,7 +751,7 @@ img{display:block;max-width:100%;}
 .ok__r{width:76px;height:76px;margin:0 auto 14px;border-radius:50%;padding:2px;
   background:linear-gradient(135deg,#F36A20,#F2AA83);}
 .ok__r div{width:100%;height:100%;border-radius:50%;background:var(--card);display:grid;place-items:center;}
-.ok__r svg{width:32px;height:32px;fill:var(--veg);}
+.ok__r svg{width:32px;height:32px;color:var(--veg);stroke-width:2;}
 .ok h3{margin:0 0 5px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
 .ok p{margin:0;font-size:13px;color:var(--text-2);}
 .ok__g{display:flex;gap:8px;margin-top:14px;min-width:0;}
@@ -683,7 +764,7 @@ img{display:block;max-width:100%;}
 .ts__r{display:flex;flex-direction:column;align-items:center;flex:0 0 20px;}
 .td{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);
   display:grid;place-items:center;flex:0 0 20px;background:var(--card);}
-.td svg{width:11px;height:11px;fill:#fff;opacity:0;}
+.td svg{width:11px;height:11px;color:#fff;opacity:0;stroke-width:2.4;}
 .tl{width:2px;flex:1;min-height:20px;background:var(--line-soft);}
 .ts--d .td{background:var(--veg-deep);border-color:var(--veg-deep);}
 .ts--d .td svg{opacity:1;}
@@ -715,7 +796,7 @@ img{display:block;max-width:100%;}
    and the warm near-white ground, so only the wordmark needs to move — and
    it rides on the theme's own --text-3, so it moves for free.
    -------------------------------------------------------------------------- */
-.fin{margin:-1px 0 0;padding:0 var(--pad);
+.fin{margin:0;padding:2px var(--pad) 0;
   display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
   font-size:10.5px;line-height:1.4;color:var(--text-3);text-align:center;}
 .fin__p{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
@@ -723,36 +804,112 @@ img{display:block;max-width:100%;}
    currentColor, arcs hold the brand red on both grounds. Only the colour
    needs a theme rule — the artwork itself never changes. */
 .fin__l{display:inline-flex;align-items:center;flex:0 0 auto;color:var(--text-2);}
-.fin__l svg{width:60px;height:11px;display:block;}
+/* Two separate problems, both now measured rather than guessed: 11px tall
+   put the letterform hairlines under a pixel, and the viewBox was cutting
+   the tops off the arcs. 82 x 15.58 matches the true 5.264 aspect. */
+.fin__l svg{width:82px;height:15.58px;display:block;}
 
 /* ================================= DOCK ================================= */
-.dk{position:relative;z-index:20;min-width:0;display:flex;flex-direction:column;gap:8px;
+/* The dock used to fade to solid --bg, which meant the mesh stopped dead
+   just above the composer — the one place the translucent composer would
+   have shown it off. It fades to a near-solid instead, so the field still
+   has something worth blurring behind it. */
+.dk{position:relative;z-index:20;min-width:0;display:flex;flex-direction:column;gap:9px;
   padding:8px 0 calc(10px + var(--safe-b));
-  background:linear-gradient(180deg,transparent,var(--bg) 34%);}
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 88%,transparent) 40%);}
+@supports not (background:color-mix(in srgb,red 50%,transparent)){
+  .dk{background:linear-gradient(180deg,transparent,var(--bg) 40%);}
+}
 
-.bar{display:none;align-items:center;gap:10px;margin-inline:var(--pad);
-  padding:8px 8px 8px 10px;border-radius:var(--r-md);background:var(--card);
-  border:1px solid var(--line);min-width:0;}
-.bar.on{display:flex;}
-.bar__im{display:flex;flex:0 0 auto;}
-.bar__im img{width:30px;height:30px;border-radius:8px;object-fit:cover;
-  border:2px solid var(--card);background:var(--glass-2);}
-.bar__im img+img{margin-left:-11px;}
-.bar__t{flex:1;min-width:0;}
-.bar__1{display:block;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bar__2{display:block;font-size:11px;color:var(--text-2);margin-top:1px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* The review strip is gone. It was a whole card restating a number the
+   cart badge already shows, sitting between you and the field you were
+   about to type in — and with the cart now in the composer it was the
+   third thing on screen pointing at the same order. The badge counts, and
+   the button is right there.
+   -------------------------------------------------------------------------- */
 
 .cw{padding-inline:var(--pad);min-width:0;}
-.cp{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:62px;
-  padding:10px 10px 10px 15px;border-radius:68px;background:var(--composer);
+/* ============================== COMPOSER ================================
+   One set of controls, two layouts, and CSS grid moves them.
+
+   Resting: a single pill — cart, field, mic, send, all on one line.
+   Focused: the field claims its own row and the controls drop underneath,
+   cart still left, mic and send still right.
+
+   Named grid areas rather than duplicated markup, because two send buttons
+   is two IDs, two listeners and one of them always ends up stale. And
+   nothing here needs a tween: the dock is pinned to the bottom of the
+   screen, so a taller composer grows upward, and bottom-aligning the grid
+   leaves the controls at the same screen position in both states.
+   ======================================================================== */
+/* Two properties keep the controls still, and the second one is the one I
+   missed the first time.
+
+   `align-items:end` bottom-aligns each item inside its own row. But while
+   the height is being tweened the container is momentarily TALLER than its
+   rows need, and grid distributes that slack from the top by default — so
+   the button row floated up and settled, which is the "coming from down"
+   movement. `align-content:end` packs the rows themselves against the
+   bottom edge, so the slack all lands above the field and the controls sit
+   exactly where they started for the entire tween.
+
+   The dock is pinned to the bottom of the screen, so the composer grows
+   upward: with both properties set, the controls never move a pixel and
+   nothing about them is animated. */
+.cp{position:relative;display:grid;align-items:end;align-content:end;gap:8px;min-width:0;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
+  grid-template-areas:"cart input mic send";
+  min-height:62px;padding:10px;border-radius:68px;background:var(--composer);
   border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);transition:border-color .25s;}
+  -webkit-backdrop-filter:blur(14px);
+  transition:border-color .25s,border-radius .3s ease;}
+/* the field still centres against the controls on one line */
+.cp>textarea,.cp>.ph{align-self:center;}
 [data-theme='light'] .cp{border-color:var(--line);}
 .cp.on{border-color:var(--brand);}
-.cp textarea{flex:1;min-width:0;border:0;outline:0;resize:none;background:none;
-  font-size:15px;line-height:1.35;max-height:80px;padding:0;}
+
+/* Focused. The field goes full width on row one; row two carries the
+   controls, with an empty cell between cart and mic doing the spacing. */
+.cp.open{
+  grid-template-areas:"input input input input"
+                      "cart  .     mic   send";
+  border-radius:26px;padding:12px 10px 10px;row-gap:12px;}
+.cp.open>textarea{min-height:46px;align-self:start;}
+.cp.open>.ph{align-self:start;}
+
+.cp>.cbt--cart{grid-area:cart;}
+.cp>textarea{grid-area:input;}
+.cp>#mic{grid-area:mic;}
+.cp>.snd{grid-area:send;}
+
+.cp textarea{min-width:0;width:100%;border:0;outline:0;resize:none;background:none;
+  font-size:15px;line-height:1.35;max-height:80px;padding:0 4px;}
+
+/* The sweep. One pass of light along the composer as it opens — the whole
+   futurist trick is that it fires once and is gone, rather than idling. */
+/* Clips itself rather than making the composer clip everything — the cart
+   badge overhangs the corner by design, and overflow:hidden on the parent
+   would have quietly sliced it off. border-radius:inherit keeps the clip
+   correct through the pill-to-rectangle transition. */
+.cp__sweep{position:absolute;inset:0;pointer-events:none;z-index:2;
+  border-radius:inherit;overflow:hidden;}
+.cp__sweep i{position:absolute;inset:-30% -45%;display:block;opacity:0;
+  background:linear-gradient(100deg,transparent 34%,rgba(243,106,32,.18) 50%,transparent 66%);}
+
+/* Cart, in the composer where your thumb already is. The count is the only
+   thing on it that changes, so it's the only thing that needs to move. */
+.cbt--cart{position:relative;}
+.cbt--cart .cbt__n{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;
+  padding:0 5px;border-radius:10px;background:var(--brand);color:var(--brand-ink);
+  border:2px solid var(--bg);font-size:10.5px;font-weight:700;line-height:15px;
+  display:none;text-align:center;font-variant-numeric:tabular-nums;
+  box-shadow:0 2px 8px rgba(243,106,32,.45);}
+.cbt--cart.has .cbt__n{display:block;}
+/* The ring that fires on an add — a pulse leaving the button, so the count
+   changing is something you SEE happen rather than something you notice
+   later. Purely additive: the number is already correct without it. */
+.cbt--cart .ring{position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
+  border:2px solid var(--brand);opacity:0;}
 .cp textarea::placeholder{color:transparent;}
 
 /* ------------------------- rotating prompt ideas -------------------------
@@ -762,10 +919,17 @@ img{display:block;max-width:100%;}
    describing the box. A placeholder attribute can't animate, so this is a
    real element sitting in the same place, clipped to one line, and it stops
    dead the moment you focus: motion under a caret is a distraction. */
-.ph{position:absolute;left:15px;right:96px;top:50%;height:22px;margin-top:-11px;
-  overflow:hidden;pointer-events:none;z-index:1;
-  transition:opacity .18s ease;}
-.ph.off{opacity:0;}
+/* Sits over the field in both layouts, so it's positioned against the same
+   grid cell rather than against the composer's own box. */
+.ph{grid-area:input;align-self:center;justify-self:stretch;
+  position:relative;height:22px;margin:0 0 0 4px;pointer-events:none;z-index:1;
+  overflow:hidden;transition:opacity .18s ease;}
+.cp>.ph{margin-top:0;}
+
+/* Hidden instantly, revealed with a fade. Fading OUT over 180ms meant the
+   hint was still on screen — and still moving with the grid — while the
+   composer opened underneath it. That overlap was the flicker. */
+.ph.off{opacity:0;visibility:hidden;transition:none;}
 .ph span{position:absolute;inset:0;display:flex;align-items:center;
   font-size:15px;line-height:22px;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -817,7 +981,7 @@ img{display:block;max-width:100%;}
    tokens — the gradient edge, the glow, the translucent fill — is overridden
    further down for light, so a light copy of them would be dead weight that
    still reads as orange to anyone auditing the file. */
-.bub:not(.bub--u),.think,.w{
+.w{
   background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
              linear-gradient(135deg,var(--ai-a) 0%,var(--ai-b) 100%) border-box;
   border:1px solid transparent;
@@ -841,8 +1005,6 @@ img{display:block;max-width:100%;}
    Orange is now the button you're meant to press, and nothing else.
    Selections resolve to near-black: unambiguous, and it costs no accent.
    ========================================================================== */
-[data-theme='light'] .bub:not(.bub--u),
-[data-theme='light'] .think,
 [data-theme='light'] .w{
   background:var(--card);border:1px solid transparent;box-shadow:var(--sh-2);
   backdrop-filter:none;-webkit-backdrop-filter:none;
@@ -871,17 +1033,19 @@ img{display:block;max-width:100%;}
 /* Former accents, demoted. */
 [data-theme='light'] .chip--b{
   background:#FDF5EF;border-color:rgba(178,106,52,.26);color:var(--text);}
-[data-theme='light'] .dots i{background:var(--text-3);}
-[data-theme='light'] .lk{color:var(--text-2);}
-[data-theme='light'] .amb i{background:rgba(120,86,50,.045);}
+[data-theme='light'] [data-theme='light'] .lk{color:var(--text-2);}
+/* (Removed: `[data-theme='light'] .amb i{background:rgba(120,86,50,.045)}`
+   survived from the era when .amb was two soft blobs. Same specificity as
+   the nth-child rules and later in the file, so it quietly replaced all
+   four radial gradients with a flat 4.5% brown — which is why the light
+   mesh looked like nothing at all.) */
 [data-theme='light'] .ch.now{background:var(--glass-2);}
 [data-theme='light'] .sg__x{border-color:var(--line-strong);color:var(--text-2);}
 /* The AI-pick badge sits on a photograph, where white glass reads cleaner
    than a colour block and still lets the brand carry in the mark itself. */
 [data-theme='light'] .tag--ai{
   background:rgba(255,255,255,.93);color:#BC4708;border-color:rgba(255,255,255,.7);}
-.bub:not(.bub--u){border-radius:18px;border-top-left-radius:6px;letter-spacing:-.24px;}
-.think{border-radius:18px;border-top-left-radius:6px;}
+
 .w--hot{box-shadow:0 0 26px rgba(243,106,32,.12);
   background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
              linear-gradient(135deg,rgba(243,106,32,.62),rgba(243,106,32,.22)) border-box;}
@@ -906,8 +1070,7 @@ img{display:block;max-width:100%;}
    above it. The fallback matters — with GSAP or JS half-loaded the panel
    still has to be a sensible size rather than collapsing to its text. */
 .thk{position:relative;padding:40px var(--pad) 36px;min-width:0;
-  min-height:var(--thk-h,58dvh);
-  display:grid;place-items:center;overflow:hidden;isolation:isolate;}
+  min-height:var(--thk-h,58dvh);display:grid;place-items:center;}
 
 /* The mask is load-bearing, not polish. The fields are drawn larger than the
    panel so they have room to drift, which means `overflow:hidden` would slice
@@ -926,34 +1089,34 @@ img{display:block;max-width:100%;}
    only now. The field bleeds off the left and right edges of the phone and
    fades out top and bottom, so it has no outline anywhere to read as an
    object sitting on the screen. */
-.thk__mesh{position:absolute;inset:-16% -34%;z-index:0;pointer-events:none;
-  filter:blur(58px);opacity:.92;will-change:transform;
-  -webkit-mask:linear-gradient(180deg,transparent 0%,#000 20%,#000 72%,transparent 100%);
-  mask:linear-gradient(180deg,transparent 0%,#000 20%,#000 72%,transparent 100%);}
-.thk__mesh i{position:absolute;display:block;will-change:transform;}
-.thk__mesh i:nth-child(1){left:-4%;top:-2%;width:66%;height:62%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-1),transparent 72%);}
-.thk__mesh i:nth-child(2){right:-8%;top:12%;width:62%;height:54%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-2),transparent 74%);}
-.thk__mesh i:nth-child(3){left:6%;bottom:2%;width:70%;height:58%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-3),transparent 72%);}
-.thk__mesh i:nth-child(4){right:-2%;bottom:-4%;width:56%;height:50%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-4),transparent 74%);}
+/* The panel used to carry its own copy of the mesh. It doesn't need one:
+   the app-level layer is already behind it, and two meshes stacked just
+   muddied each other. What's left here is the mark and the word. */
+/* ------------------------------- mesh colour ----------------------------
+   One palette, four mid-tone pigments — ember, clay, indigo, ochre. Darker
+   and less saturated than the tints they replace, which is what lets the
+   same four hues work on both grounds: on near-black they read as a glow,
+   on near-white as a shadow-tint, rather than needing a different identity
+   per theme.
+
+   Only the alpha changes, and it's solved rather than guessed. Dark starts
+   at L=0.003, so a small absolute rise is already a visible glow; light
+   starts at L=0.850 and needs a real drop to register at all. Both sets
+   below land ~0.05 from the dark ground and ~0.12 from the light one.
+   ------------------------------------------------------------------------ */
 :root{
-  --mesh-1:rgba(243,106,32,.40);
-  --mesh-2:rgba(242,170,131,.26);
-  --mesh-3:rgba(120,64,180,.24);
-  --mesh-4:rgba(255,196,120,.24);
+  --mesh-1:rgba(194,82,26,.53);    /* ember  */
+  --mesh-2:rgba(158,68,54,.65);    /* clay   */
+  --mesh-3:rgba(74,58,134,.91);    /* indigo */
+  --mesh-4:rgba(168,114,28,.49);   /* ochre  */
 }
 [data-theme='light']{
-  /* Higher key and lower saturation: on a warm near-white ground the dark
-     mix turns to mud, and a blurred field at 40% alpha reads as a stain. */
-  --mesh-1:rgba(243,106,32,.34);
-  --mesh-2:rgba(255,190,140,.50);
-  --mesh-3:rgba(198,164,232,.34);
-  --mesh-4:rgba(255,222,168,.54);
+  --mesh-1:rgba(194,82,26,.11);
+  --mesh-2:rgba(158,68,54,.10);
+  --mesh-3:rgba(74,58,134,.09);
+  --mesh-4:rgba(168,114,28,.13);
 }
-@media (prefers-reduced-motion:reduce){ .thk__mesh{filter:blur(64px);} }
+@media (prefers-reduced-motion:reduce){ .amb{filter:blur(64px);} }
 
 .thk__top{position:relative;z-index:2;display:flex;flex-direction:column;
   align-items:center;gap:15px;width:100%;min-width:0;}
@@ -982,9 +1145,11 @@ img{display:block;max-width:100%;}
    control now: its own bordered surface, and the chat count sitting inside
    it so you know there's more than one before you go looking.
    -------------------------------------------------------------------------- */
-.ttl{padding:3px 7px 3px 10px;border-radius:var(--r-pill);
+.ttl{padding:4px 8px 4px 11px;border-radius:var(--r-pill);max-width:100%;
   background:var(--glass);border:1px solid var(--line-soft);
   transition:background .18s,border-color .18s;}
+.ttl .hd__n{flex:0 1 auto;min-width:0;}
+.ttl svg{flex:0 0 15px;}
 .ttl:hover,.ttl.open{background:var(--glass-2);border-color:var(--line);}
 .ttl__n{display:none;flex:0 0 auto;min-width:17px;height:17px;padding:0 5px;
   border-radius:99px;background:var(--glass-2);border:1px solid var(--line-soft);
@@ -993,7 +1158,7 @@ img{display:block;max-width:100%;}
 .ttl--many .ttl__n{display:block;}
 .ttl--many{border-color:var(--line);}
 .ttl{display:flex;align-items:center;gap:5px;min-width:0;text-align:left;color:inherit;}
-.ttl svg{width:15px;height:15px;fill:var(--text-2);flex:0 0 auto;transition:transform .3s;}
+.ttl svg{width:15px;height:15px;color:var(--text-2);flex:0 0 auto;transition:transform .3s;}
 .ttl.open svg{transform:rotate(180deg);}
 
 .islScrim{position:fixed;inset:0;z-index:28;background:rgba(0,0,0,.55);
@@ -1020,28 +1185,58 @@ img{display:block;max-width:100%;}
 .isl__l{overflow-y:auto;padding:0 10px 10px;flex:1 1 auto;scrollbar-width:none;min-width:0;}
 .isl__l::-webkit-scrollbar{display:none;}
 
-.ch{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border-radius:14px;
-  text-align:left;min-width:0;background:transparent;transition:background .18s;}
+/* Three visibly different kinds of row, so you don't have to read them to
+   tell them apart: a dashed slot for the new one, a filled surface with the
+   brand mark for the one you're in, and plain rows for the rest. */
+.ch{display:flex;align-items:center;gap:10px;width:100%;padding:10px 11px;
+  border-radius:12px;text-align:left;min-width:0;border:1px solid transparent;
+  transition:background .16s,border-color .16s;}
+.ch+.ch{margin-top:2px;}
 .ch:hover{background:var(--glass);}
-.ch.now{background:rgba(243,106,32,.12);}
-.ch__i{width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:var(--glass-2);
-  display:grid;place-items:center;position:relative;}
-.ch__i svg{width:16px;height:16px;}
-.ch.now .ch__i{background:linear-gradient(135deg,#F36A20,#F2AA83);}
-.ch__b{flex:1;min-width:0;}
-.ch__n{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ch__d{font-size:11px;color:var(--text-2);margin-top:2px;
+.ch__i{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:var(--glass-2);
+  display:grid;place-items:center;color:var(--text-3);}
+.ch__i svg{width:14px;height:14px;fill:currentColor;}
+.ch__n{flex:1;min-width:0;font-size:14px;font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ch__x{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;
-  color:var(--text-3);opacity:.7;}
+/* Item count — the one thing that genuinely differs between two chats. */
+.ch__c{flex:0 0 auto;min-width:20px;height:20px;padding:0 6px;border-radius:99px;
+  background:var(--glass-2);border:1px solid var(--line-soft);
+  font-size:11px;font-weight:600;line-height:18px;text-align:center;
+  color:var(--text-2);font-variant-numeric:tabular-nums;}
+.ch__x{width:26px;height:26px;flex:0 0 26px;border-radius:50%;display:grid;place-items:center;
+  color:var(--text-3);opacity:.6;transition:opacity .16s,background .16s;}
 .ch__x svg{width:14px;height:14px;fill:currentColor;}
 .ch__x:hover{background:var(--glass-2);opacity:1;}
-.ch__n .cnt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
-  background:var(--brand);color:var(--brand-ink);font-size:10px;font-weight:600;vertical-align:1px;}
-.isl__new{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border-radius:14px;
-  text-align:left;min-width:0;margin-bottom:2px;}
-.isl__new .ch__i{background:var(--brand);color:var(--brand-ink);}
-.isl__new .ch__i svg{fill:currentColor;}
+
+/* The one you're in, marked by position rather than by paint: a rail down
+   the left edge and a live dot where the mark goes. A filled colour tile on
+   one row out of four made that row look like a second button competing
+   with the actual one at the top. */
+.ch.now{position:relative;background:var(--card-2);border-color:var(--line-soft);
+  padding-left:15px;}
+.ch.now::before{content:'';position:absolute;left:5px;top:9px;bottom:9px;width:3px;
+  border-radius:2px;background:var(--brand);}
+/* The rail says "this one". The mark just needs to agree with it quietly —
+   a light orange stroke, not a filled tile. */
+.ch.now .ch__i{background:rgba(243,106,32,.12);color:#F7A46A;}
+[data-theme='light'] .ch.now .ch__i{background:rgba(243,106,32,.10);color:var(--brand-dark);}
+.ch.now .ch__n{font-weight:600;color:var(--text);}
+[data-theme='light'] .ch.now{background:var(--glass);border-color:var(--line-soft);}
+
+/* New order is the one action here, so it's the one thing wearing the
+   primary — a solid tile, not the tint it had while it was competing with
+   an orange row below it. */
+.isl__new{display:flex;align-items:center;gap:10px;width:100%;padding:10px 11px;
+  margin-bottom:8px;border-radius:12px;text-align:left;min-width:0;
+  border:1px solid transparent;background:var(--glass);
+  transition:background .16s,border-color .16s;}
+.isl__new:hover{background:var(--glass-2);border-color:var(--line-soft);}
+.isl__new-i{width:28px;height:28px;flex:0 0 28px;border-radius:9px;
+  display:grid;place-items:center;
+  background:var(--brand);color:var(--brand-ink);
+  box-shadow:0 2px 10px rgba(243,106,32,.32);}
+.isl__new-i svg{width:15px;height:15px;stroke-width:2.1;}
+.isl__new .ch__n{color:var(--text);font-weight:600;}
 
 
 /* --------------------------------------------------------------------------
@@ -1052,10 +1247,6 @@ img{display:block;max-width:100%;}
    and everything above it dims slightly so the one thing you're being asked
    is the one thing lit.
    -------------------------------------------------------------------------- */
-.chiprow{transition:opacity .22s ease,transform .22s ease,max-height .24s ease;
-  max-height:52px;overflow:hidden;}
-.chiprow.hid{opacity:0;transform:translateY(8px);max-height:0;
-  padding-top:0;padding-bottom:0;pointer-events:none;}
 
 .w--live{box-shadow:0 0 0 3px rgba(243,106,32,.14);}
 /* In light the dimming of everything else already says which one is live,

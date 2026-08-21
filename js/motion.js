@@ -19,6 +19,76 @@ const M=(function(){
       G.fromTo(el,{scale:1},{scale:1.06,duration:.18,ease:'power2.out',
         yoyo:true,repeat:3,transformOrigin:'left center',
         onComplete:()=>G.set(el,{scale:1})});},
+    /* -------------------------------------------------- composer states
+       Nothing animates except the box getting taller.
+
+       An earlier pass used Flip to fly the controls to their new row. That
+       was solving a problem the layout could solve for free: the dock is
+       pinned to the bottom of the screen, so a taller composer grows
+       upward, and with the grid bottom-aligned the cart, mic and send sit
+       at the same screen position in both states. They don't need to be
+       animated because they never actually move — only the field does, and
+       it moves because the box's top edge does.
+
+       With GSAP absent or reduced motion on, the class toggle alone is
+       still completely correct. */
+    composer(cp,on){
+      const G=g();
+      if(!cp) return;
+      if(!G||M.red){ cp.classList.toggle('open',on); return; }
+
+      const h0=cp.offsetHeight;
+      cp.classList.toggle('open',on);          /* DOM is correct from here */
+      const h1=cp.offsetHeight;
+
+      G.killTweensOf(cp);
+      G.fromTo(cp,{height:h0},{height:h1,duration:.4,ease:'power2.inOut',
+        onComplete:()=>G.set(cp,{clearProps:'height'})});
+
+      /* One pass of light along the box as it opens, then gone. */
+      const sw=cp.querySelector('.cp__sweep i');
+      if(on&&sw) G.fromTo(sw,{opacity:1,xPercent:-120},
+        {xPercent:120,opacity:0,duration:.72,ease:'power2.out'});
+    },
+    /* ------------------------------------------------------ the mesh
+       Each field wanders instead of breathing. One yoyo tween on x, y and
+       scale together traces a straight line back and forth — symmetrical,
+       and the eye picks the rhythm up in about two seconds. So x, y and
+       scale each get their OWN tween with a different duration, and the
+       durations are chosen not to divide into one another. The composite
+       path is a slow Lissajous figure: it does eventually repeat, but only
+       after the lowest common multiple of four odd periods, which is far
+       longer than anyone watches a loading state.
+
+       Directions alternate per field as well, so they drift apart and back
+       rather than all leaning the same way.
+
+       Drifts only while the assistant is working — a perpetual loop behind
+       an idle screen is a battery cost for something nobody is looking at. */
+    mesh(on){
+      const G=g(), amb=document.getElementById('amb'), app=document.getElementById('app');
+      if(app) app.classList.toggle('busy',!!on);   /* opacity is CSS's job */
+      if(!G||!amb) return;
+      const blobs=amb.querySelectorAll('i');
+      if(!on){
+        G.killTweensOf(blobs);
+        G.to(blobs,{xPercent:0,yPercent:0,scale:1,duration:.9,ease:'power2.out'});
+        return;
+      }
+      const drift=[
+        { x: 19, y:-14, s:1.16, dx:5.3, dy:7.1, ds:9.7  },
+        { x:-23, y: 12, s:0.86, dx:6.7, dy:4.3, ds:11.3 },
+        { x: 14, y: 18, s:1.12, dx:8.9, dy:5.9, ds:7.9  },
+        { x:-17, y:-16, s:0.90, dx:4.7, dy:9.3, ds:12.7 },
+      ];
+      blobs.forEach((b,k)=>{
+        const p=drift[k%drift.length];
+        G.killTweensOf(b);
+        G.to(b,{xPercent:p.x,duration:p.dx,repeat:-1,yoyo:true,ease:'sine.inOut'});
+        G.to(b,{yPercent:p.y,duration:p.dy,repeat:-1,yoyo:true,ease:'sine.inOut'});
+        G.to(b,{scale:p.s,  duration:p.ds,repeat:-1,yoyo:true,ease:'sine.inOut'});
+      });
+    },
     tap(el,to){const G=g();if(!G||!el)return;
       G.timeline().to(el,{scale:to||.96,duration:.08}).to(el,{scale:1,duration:.22,ease:'power3.out'});},
     pop(el){const G=g();if(!G||!el)return;
@@ -43,9 +113,23 @@ const M=(function(){
         .to(i,{opacity:0,duration:.12},'-=.12')
         .to(to,{scale:1.05,duration:.13},'-=.1')
         .to(to,{scale:1,duration:.3,ease:'back.out(2.2)'});},
-    bar(el,inn){const G=g();if(!G)return;
-      if(inn) G.fromTo(el,{y:44,opacity:0},{y:0,opacity:1,duration:.42,ease:'power3.out',clearProps:'transform'});
-      else G.to(el,{y:44,opacity:0,duration:.22});},
+    /* ---------------------------------------------------- added to cart
+       The count is written directly and is correct before any of this runs.
+       What this adds is the moment: the button takes the hit, a ring leaves
+       it, and the number swaps on a short rise so you see it tick rather
+       than discovering it later. */
+    added(btn,badge){
+      const G=g(); if(!G||!btn) return;
+      const ring=btn.querySelector('.ring');
+      G.timeline()
+        .to(btn,{scale:.88,duration:.1,ease:'power2.in'})
+        .to(btn,{scale:1,duration:.5,ease:'elastic.out(1,0.45)'});
+      if(ring) G.fromTo(ring,{scale:.7,opacity:.85},
+        {scale:1.9,opacity:0,duration:.62,ease:'power2.out'});
+      if(badge) G.timeline()
+        .fromTo(badge,{y:-9,opacity:0,scale:.6},
+          {y:0,opacity:1,scale:1,duration:.34,ease:'back.out(2.4)'});
+    },
     grow(card){const G=g();if(!G)return;
       const h0=card.offsetHeight;
       requestAnimationFrame(()=>{const h1=card.offsetHeight;
