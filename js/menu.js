@@ -23,7 +23,22 @@ const Menu = {
       lines.push({it,q,sub:it.p*q});
     }
     const was=lines.reduce((t,l)=>t+l.sub,0);
-    return Object.assign({},c,{lines,was,now:was-c.off,n_items:lines.reduce((t,l)=>t+l.q,0)});
+    /* Rating and hero image are DERIVED, never stored — a combo can't quote
+       a score its own dishes don't add up to, and it can't show a photo of
+       something that left the menu. Weighted by price, so the dish you're
+       mostly paying for is the dish being rated. */
+    const wsum=lines.reduce((t,l)=>t+l.sub,0)||1;
+    const r=lines.reduce((t,l)=>t+l.it.r*l.sub,0)/wsum;
+    const hero=lines.slice().sort((a,b)=>b.sub-a.sub)[0].it;
+    return Object.assign({},c,{lines,was,now:was-c.off,
+      n_items:lines.reduce((t,l)=>t+l.q,0),
+      r:Math.round(r*10)/10, hero});
+  },
+  /* The opening screen's hero. First entry that resolves, so a dish going
+     off the menu demotes its combo instead of showing a broken card. */
+  captain(){
+    for(const c of COMBOS){ const r=Menu.combo(c.id); if(r) return r; }
+    return null;
   },
   combos(f){
     f=f||{};

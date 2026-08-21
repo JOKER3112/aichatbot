@@ -347,21 +347,53 @@ function closeChatRow(id){
 /* exported for the other modules */
 window.IC=IC;
 window.MI=MI;
+/* --------------------------------------------------------------- moods
+   Not filter chips. Each one is a way of feeling about dinner, and tapping
+   it says that sentence into the chat rather than applying a facet — which
+   is why the label is first-person and the thing it sends is a sentence.
+
+   Three sets, because the right question changes: before you've told me
+   anything, after you've told me a mood, and after something's in the cart.
+   Four visible at a time; the rest scroll. */
+const MOODS={
+  open:[
+    ['\ud83c\udf36\ufe0f','Craving spicy',      'Something spicy',        'sp'],
+    ['\ud83e\udd57','Keep it light',      'Something light',        'lt'],
+    ['\ud83c\udf5b','Something filling',  'Something really filling','fl'],
+    ['\ud83c\udf70','Treat myself',       'Show me desserts',       'sw'],
+    ['\u2615','Just a snack',       'Something to snack on',  'sn'],
+    ['\ud83d\udc65','Ordering for two',   'Meal for two',           'tw'],
+  ],
+  mood:[
+    ['\ud83d\udd25','Hotter than that',   'Make it really spicy',   'sp'],
+    ['\ud83c\udf57','Protein-heavy',      'Non-veg options',        'fl'],
+    ['\ud83e\udd64','Something cooling',  'Show me drinks',         'dr'],
+    ['\u2b50','What\u2019s best here',   'Show bestsellers',       'bs'],
+  ],
+  added:[
+    ['\ud83e\udd64','Add a drink',        'Show me drinks',         'dr'],
+    ['\ud83c\udf6e','Something sweet',    'Show me desserts',       'sw'],
+    ['\ud83d\udc40','Show me more',       'Recommend something',    'bs'],
+    ['\ud83e\uddfe','Review my order',    'Show my order',          'rv'],
+  ],
+};
+
 /* Composer prompt ideas. A static "Ask anything about menu…" teaches
    nothing; these teach the grammar the parser actually understands —
    quantities, dish names, constraints — by example, one at a time. */
+/* Leads with the invitation, then shows what "anything" actually means.
+   The first line is the one you see on the opening screen. */
 const PROMPTS = [
-  "Show me today's special",
-  'Add 3 filter coffees',
+  'Ask your captain\u2026',
   'Something spicy under \u20b9150',
-  'Veg meal for two',
+  'Add 3 filter coffees',
   'Full chicken biryani, no onion',
   'What goes with masala dosa?',
-  'Two idlis and a vada',
   'Anything light for breakfast',
 ];
 
 window.PROMPTS=PROMPTS;
+window.MOODS=MOODS;
 window.THINK_LINES=THINK_LINES;
 window.Chats=Chats;
 window.esc=esc;

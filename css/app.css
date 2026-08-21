@@ -144,14 +144,13 @@ img{display:block;max-width:100%;}
   -webkit-mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);
   mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);}
 .amb i{position:absolute;display:block;will-change:transform;}
-.amb i:nth-child(1){left:-14%;top:-6%;width:70%;height:44%;
+/* Wide and soft, and only two of them — the third and fourth <i> stay in
+   the markup so the layer can go back to four without touching HTML. */
+.amb i:nth-child(1){left:-20%;top:-10%;width:92%;height:64%;
   background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-1),transparent 72%);}
-.amb i:nth-child(2){right:-16%;top:18%;width:66%;height:38%;
+.amb i:nth-child(2){right:-22%;bottom:-8%;width:88%;height:60%;
   background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-2),transparent 74%);}
-.amb i:nth-child(3){left:-6%;bottom:8%;width:74%;height:42%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-3),transparent 72%);}
-.amb i:nth-child(4){right:-10%;bottom:-8%;width:60%;height:36%;
-  background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-4),transparent 74%);}
+.amb i:nth-child(3),.amb i:nth-child(4){display:none;}
 /* Working. The whole screen, not one panel in the middle of it. Both
    themes share these two levels — the per-theme alphas above already do
    all the dimming, and a light-only override on top of them was part of
@@ -219,21 +218,13 @@ img{display:block;max-width:100%;}
    bubble, same timestamp as everything else the assistant says. Top-aligned
    on purpose: a chat reads down from the top, and a centred opening line
    jumped upward the instant you replied to it. */
-.wel{padding:2px 0 8px;}
-.wel .say{max-width:34ch;}
 /* Only two words wear the brand: the greeting and the name. */
 .wel .hi,.wel .nm{font-style:normal;font-weight:600;color:var(--brand);}
 .wel .say{font-size:17px;line-height:1.45;}
 [data-theme='light'] .wel .hi,
 [data-theme='light'] .wel .nm{color:var(--brand-dark);}
 .wel .say .t{margin-top:8px;}
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
-  margin-top:14px;padding-left:var(--lane);padding-right:var(--pad);}
-.grid2 button{display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:10px 12px;
-  border-radius:var(--r-sm);background:var(--card);border:1px solid var(--line-soft);
-  font-size:13px;font-weight:500;text-align:left;}
-.grid2 i{font-style:normal;font-size:15px;flex:0 0 auto;}
-.grid2 span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* (.grid2 removed with the eight-chip opening screen.) */
 
 /* ------------------------------- messages ------------------------------- */
 /* ------------------------------- messages -------------------------------
@@ -670,6 +661,135 @@ img{display:block;max-width:100%;}
   text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
 .ntl--ok{margin-top:14px;text-align:left;}
 
+/* ==========================================================================
+   THE OPENING SCREEN — greeting, one recommendation, four moods.
+
+   The rule that governs all of it: the AI gradient marks what the assistant
+   produced, orange marks what you press, and they never appear on the same
+   element. The hero card is the clearest case — its edge and glow are the
+   AI's, its button is the brand's.
+   ========================================================================== */
+.wel{padding:2px 0 8px;}
+.wel__hi{margin-bottom:2px;}
+.wel .say{font-size:17px;line-height:1.45;max-width:34ch;}
+.wel__q{display:block;margin-top:1px;}
+.wel .hi{font-style:normal;font-weight:600;color:var(--brand);}
+[data-theme='light'] .wel .hi{color:var(--brand-dark);}
+
+/* ------------------------------- hero combo ------------------------------ */
+.hero{position:relative;margin:12px var(--pad) 0;border-radius:22px;min-width:0;
+  overflow:hidden;isolation:isolate;
+  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
+             linear-gradient(135deg,var(--ai-a),var(--ai-b) 62%,transparent) border-box;
+  border:1px solid transparent;box-shadow:var(--ai-glow);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+[data-theme='light'] .hero{
+  background:var(--card);border:1px solid rgba(123,110,255,.20);
+  box-shadow:var(--sh-2);backdrop-filter:none;-webkit-backdrop-filter:none;}
+/* A single travelling highlight, six seconds a pass. Slow enough that you
+   notice it only if you stop to look, which is the point. */
+.hero__glow{position:absolute;inset:-40% -30%;z-index:0;pointer-events:none;
+  background:radial-gradient(closest-side circle at 50% 50%,
+    rgba(155,123,255,.16),transparent 70%);filter:blur(34px);}
+[data-theme='light'] .hero__glow{background:radial-gradient(closest-side circle at 50% 50%,
+    rgba(123,110,255,.13),transparent 70%);}
+
+.hero__k{position:relative;z-index:1;display:flex;align-items:center;gap:6px;
+  padding:12px 14px 0;font-size:10.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ai-2);}
+[data-theme='light'] .hero__k{color:#6B54D6;}
+.hero__k svg{width:13px;height:13px;flex:0 0 13px;fill:currentColor;}
+
+.hero__tap{position:relative;z-index:1;display:flex;gap:12px;width:100%;
+  padding:11px 14px 0;text-align:left;min-width:0;}
+.hero__im{flex:0 0 96px;width:96px;height:96px;border-radius:16px;overflow:hidden;
+  background:var(--glass-2);}
+.hero__im img{width:100%;height:100%;object-fit:cover;}
+.hero__b{flex:1;min-width:0;display:block;}
+.hero__n{display:block;font-size:18px;font-weight:600;letter-spacing:-.02em;
+  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* The three dishes, with the plus signs doing the work a comma can't. */
+.hero__l{display:block;margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--text-2);}
+.hero__l i{font-style:normal;color:var(--text-3);padding:0 4px;}
+.hero__m{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;
+  font-size:11.5px;color:var(--text-3);min-width:0;}
+.hero__m .st{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text);}
+.hero__m .st svg{width:11px;height:11px;fill:var(--star);}
+.hero__sv{color:var(--veg);font-weight:600;}
+/* The reason. Small on purpose — it should read as a note the assistant
+   made, not as marketing copy. */
+.hero__w{display:block;margin-top:8px;font-size:12.5px;line-height:1.4;
+  color:var(--text-2);}
+
+.hero__f{position:relative;z-index:1;display:flex;align-items:center;gap:10px;
+  padding:13px 14px 14px;min-width:0;}
+.hero__p{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;}
+.hero__p .pr{font-size:20px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;}
+.hero__p s{font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums;}
+.hero__f .b{margin-left:auto;min-height:42px;padding:0 16px;font-size:14px;}
+
+/* --------------------------------- moods -------------------------------- */
+.mood{margin-top:20px;min-width:0;}
+.mood__h{padding:0 var(--pad);margin-bottom:10px;
+  font-size:13.5px;font-weight:500;color:var(--text-2);}
+/* Two up, and the row scrolls — four visible at once is the most you can
+   weigh without it turning back into a list of filters. */
+.mood__g{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+  grid-template-rows:repeat(2,auto);gap:9px;
+  padding:2px var(--pad) 4px;overflow-x:auto;scrollbar-width:none;
+  grid-auto-columns:calc((100% - var(--pad)*2 - 9px)/2);}
+.mood__g::-webkit-scrollbar{display:none;}
+
+.mc{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
+  gap:7px;min-height:84px;padding:12px;border-radius:16px;overflow:hidden;
+  text-align:left;min-width:0;
+  background:var(--card);border:1px solid var(--line-soft);
+  transition:border-color .18s,transform .18s;}
+/* The wash is the only thing that differs between them, and it's kept low
+   enough that the label never fights it. */
+.mc::before{content:'';position:absolute;inset:0;z-index:0;opacity:.5;
+  background:radial-gradient(120% 90% at 82% 12%,var(--mc),transparent 68%);}
+.mc--sp{--mc:rgba(226,88,44,.55);}
+.mc--lt{--mc:rgba(79,193,124,.42);}
+.mc--fl{--mc:rgba(214,138,42,.48);}
+.mc--sw{--mc:rgba(214,104,158,.42);}
+.mc--sn{--mc:rgba(150,116,80,.45);}
+.mc--tw{--mc:rgba(91,140,255,.40);}
+.mc--dr{--mc:rgba(72,168,196,.42);}
+.mc--bs{--mc:rgba(155,123,255,.42);}
+.mc--rv{--mc:rgba(120,124,136,.40);}
+[data-theme='light'] .mc{box-shadow:var(--sh-1);}
+[data-theme='light'] .mc::before{opacity:.34;}
+.mc__i{position:relative;z-index:1;font-size:20px;line-height:1;}
+.mc__t{position:relative;z-index:1;font-size:13px;font-weight:500;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;}
+
+/* ------------------------------ combo peek ------------------------------ */
+.peek{padding:14px 0 4px;min-width:0;}
+.peek__h{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ai-2);}
+[data-theme='light'] .peek__h{color:#6B54D6;}
+.peek__h svg{width:13px;height:13px;fill:currentColor;}
+.peek__n{margin:7px 0 12px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
+.peek__l{border-radius:12px;background:var(--glass);padding:4px 10px;min-width:0;}
+.peek__i{display:flex;align-items:center;gap:10px;padding:8px 0;min-width:0;}
+.peek__i+.peek__i{box-shadow:inset 0 1px 0 var(--line-soft);}
+.peek__i img{width:34px;height:34px;flex:0 0 34px;border-radius:9px;object-fit:cover;
+  background:var(--glass-2);}
+.peek__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.peek__in .veg{flex:0 0 12px;width:12px;height:12px;}
+.peek__in .veg::after{width:5px;height:5px;}
+.peek__q{flex:0 0 auto;font-size:12px;color:var(--text-2);font-variant-numeric:tabular-nums;}
+.peek__p{flex:0 0 auto;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;
+  min-width:44px;text-align:right;}
+.peek__f{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-size:13px;
+  color:var(--text-2);}
+.peek__f b{margin-left:auto;font-size:18px;font-weight:600;color:var(--text);
+  font-variant-numeric:tabular-nums;}
+.peek__f s{color:var(--text-3);font-variant-numeric:tabular-nums;}
+
 /* ------------------------------- combo card -------------------------------
    "Meal for two" used to answer with a shrug — no intent, no items, four
    more chips. It's a real bundle now, and a bundle has to show its working:
@@ -866,7 +986,11 @@ img{display:block;max-width:100%;}
 /* the field still centres against the controls on one line */
 .cp>textarea,.cp>.ph{align-self:center;}
 [data-theme='light'] .cp{border-color:var(--line);}
-.cp.on{border-color:var(--brand);}
+/* Focus is an AI state, not an action, so it wears the AI gradient rather
+   than the button colour. */
+.cp.on{border-color:transparent;
+  background:linear-gradient(var(--composer),var(--composer)) padding-box,
+             linear-gradient(120deg,var(--ai-1),var(--ai-2) 55%,var(--ai-3)) border-box;}
 
 /* Focused. The field goes full width on row one; row two carries the
    controls, with an empty cell between cart and mic doing the spacing. */
@@ -894,7 +1018,7 @@ img{display:block;max-width:100%;}
 .cp__sweep{position:absolute;inset:0;pointer-events:none;z-index:2;
   border-radius:inherit;overflow:hidden;}
 .cp__sweep i{position:absolute;inset:-30% -45%;display:block;opacity:0;
-  background:linear-gradient(100deg,transparent 34%,rgba(243,106,32,.18) 50%,transparent 66%);}
+  background:linear-gradient(100deg,transparent 34%,rgba(155,123,255,.24) 50%,transparent 66%);}
 
 /* Cart, in the composer where your thumb already is. The count is the only
    thing on it that changes, so it's the only thing that needs to move. */
@@ -972,9 +1096,20 @@ img{display:block;max-width:100%;}
      Same idea, warmer axis: a near-neutral highlight easing into a low
      ember of the brand. It still reads as "the assistant", it just belongs
      in a restaurant now. */
-  --ai-a:rgba(255,255,255,.18);
-  --ai-b:rgba(243,106,32,.34);
-  --ai-glow:0 1px 22px rgba(243,106,32,.06);
+  /* Blue -> lavender -> purple. This is the AI's colour and it does exactly
+     one job: marking what the assistant produced. Orange is untouched and
+     still means "press this". The two never land on the same element, which
+     is the only reason a second hue is worth having.
+
+     (This reverses a warm AI edge from an earlier pass. That change was made
+     because the AI REPLY sat in a tinted card and read cold — the reply has
+     no card at all now, so the conflict is gone.) */
+  --ai-1:#5B8CFF;
+  --ai-2:#9B7BFF;
+  --ai-3:#C084F5;
+  --ai-a:rgba(91,140,255,.36);
+  --ai-b:rgba(192,132,245,.32);
+  --ai-glow:0 1px 26px rgba(123,110,255,.10);
   --ai-fill:rgba(22,23,27,.84);
 }
 /* Light deliberately defines no --ai-* of its own. Every consumer of those
@@ -1093,28 +1228,23 @@ img{display:block;max-width:100%;}
    the app-level layer is already behind it, and two meshes stacked just
    muddied each other. What's left here is the mark and the word. */
 /* ------------------------------- mesh colour ----------------------------
-   One palette, four mid-tone pigments — ember, clay, indigo, ochre. Darker
-   and less saturated than the tints they replace, which is what lets the
-   same four hues work on both grounds: on near-black they read as a glow,
-   on near-white as a shadow-tint, rather than needing a different identity
-   per theme.
+   Two pigments, not four: ember and indigo. Four overlapping washes average
+   into one muddy tint — with two there is a readable gradient BETWEEN them,
+   which is the thing that makes it read as a mesh at all. Warm on one side,
+   cool on the other, so the blend has somewhere to travel.
 
-   Only the alpha changes, and it's solved rather than guessed. Dark starts
-   at L=0.003, so a small absolute rise is already a visible glow; light
-   starts at L=0.850 and needs a real drop to register at all. Both sets
-   below land ~0.05 from the dark ground and ~0.12 from the light one.
+   Same RGB in both themes, only the alpha differs, and the alphas are solved
+   rather than guessed. Dark starts at L=0.003, so a small absolute rise is
+   already a visible glow; light starts at L=0.850 and needs a real drop to
+   register. Both land ~0.05 from the dark ground and ~0.12 from the light.
    ------------------------------------------------------------------------ */
 :root{
   --mesh-1:rgba(194,82,26,.53);    /* ember  */
-  --mesh-2:rgba(158,68,54,.65);    /* clay   */
-  --mesh-3:rgba(74,58,134,.91);    /* indigo */
-  --mesh-4:rgba(168,114,28,.49);   /* ochre  */
+  --mesh-2:rgba(74,58,134,.91);    /* indigo */
 }
 [data-theme='light']{
   --mesh-1:rgba(194,82,26,.11);
-  --mesh-2:rgba(158,68,54,.10);
-  --mesh-3:rgba(74,58,134,.09);
-  --mesh-4:rgba(168,114,28,.13);
+  --mesh-2:rgba(74,58,134,.09);
 }
 @media (prefers-reduced-motion:reduce){ .amb{filter:blur(64px);} }
 

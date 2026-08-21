@@ -192,17 +192,28 @@ const ITEMS = [
    coffee twice. `off` is the rupee saving against the sum of the parts.
    ========================================================================== */
 const COMBOS = [
+  /* The captain's own pick — a dinner for one, which is what the opening
+     screen assumes until you say otherwise. Deliberately first in the list
+     so `COMBOS[0]` is always the hero. */
+  { id:'x0', n:'Captain\u2019s dinner', k:"Captain's combo", veg:false, serves:1, meal:true,
+    d:'Biryani with something cool alongside, and a sweet to finish.',
+    why:'A filling dinner for one, under \u20b9250.',
+    l:[['m2',1],['b4',1],['s1',1]], off:25 },
   { id:'x1', n:'Veg meal for two', k:'Meal for two', veg:true, serves:2, meal:true,
     d:'A full thali to share, a crisp masala dosa, and two filter coffees.',
+    why:'Feeds two properly without ordering four things.',
     l:[['m1',1],['t3',1],['b1',2]], off:40 },
   { id:'x2', n:'Non-veg feast for two', k:'Meal for two', veg:false, serves:2, meal:true,
     d:'Chicken biryani, Chettinad on the side, parotta to mop up, neer mor to cool down.',
+    why:'The spread most tables end up building anyway.',
     l:[['m2',1],['c1',1],['t7',1],['b4',1]], off:45 },
   { id:'x3', n:'Tiffin breakfast', k:'Breakfast', veg:true, serves:1,
     d:'Two idlis, a medu vada and a filter coffee. The standard morning.',
+    why:'The standard morning, priced as a set.',
     l:[['t1',1],['t2',1],['b1',1]], off:15 },
   { id:'x4', n:'Evening snack box', k:'Snacks', veg:true, serves:2,
     d:'Samosa, sambar vada and two masala chais for the 5pm slump.',
+    why:'For the five o\u2019clock slump.',
     l:[['k1',1],['k2',1],['b2',2]], off:20 },
 ];
 

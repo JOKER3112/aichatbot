@@ -201,48 +201,105 @@ const UI=(function(){
     };
   })();
 
-  /* -------------------------------------------------------------- welcome */
-  /* The empty screen is a message now, not a landing page. It uses the same
-     avatar, the same bubble and the same timestamp as every other thing the
-     assistant says — so the first thing you see is the product working
-     rather than a splash that has to hand off to it. The starters sit under
-     the bubble as answers to the question it just asked.
+  /* ======================================================================
+     THE OPENING SCREEN
 
-     Top-aligned deliberately: a chat reads down from the top, and centring
-     the opening line meant it jumped upward the instant you replied. */
+     It used to be: greeting, then eight chips. Eight chips is a menu of
+     things you may ask, which puts the work back on you before you've even
+     said hello — and it makes the assistant look like a search box wearing
+     a face.
+
+     The order is now: a short hello, ONE recommendation the captain has
+     already made, four ways to describe a mood, and the composer. The
+     screen's first claim is "I've found you something", not "here is what
+     I can do". Everything below the greeting is still the assistant
+     talking; it just gets to the food in one screen instead of two.
+     ====================================================================== */
+
+  /* --------------------------------------------------------- hero combo */
+  function heroCard(c){
+    return '<section class="hero" data-id="'+c.id+'">'+
+      '<span class="hero__glow" aria-hidden="true"></span>'+
+      '<header class="hero__k">'+IC.spark+'<span>Captain\u2019s combo</span></header>'+
+      '<button class="hero__tap" data-a="combodetail" data-id="'+c.id+'" '+
+        'aria-label="See what\u2019s in this combo">'+
+        '<span class="hero__im"><img '+Menu.img(c.hero)+'></span>'+
+        '<span class="hero__b">'+
+          '<span class="hero__n">'+esc(c.n)+'</span>'+
+          '<span class="hero__l">'+c.lines.map(l=>
+            esc(l.it.n)+(l.q>1?' \u00d7'+l.q:'')).join('<i>+</i>')+'</span>'+
+          '<span class="hero__m">'+
+            '<span class="st">'+IC.star+' '+c.r+'</span>'+
+            '<span class="dot"></span><span>'+c.n_items+' items</span>'+
+            '<span class="dot"></span><span class="hero__sv">save '+R$(c.off)+'</span>'+
+          '</span>'+
+          '<span class="hero__w">'+esc(c.why)+'</span>'+
+        '</span>'+
+      '</button>'+
+      '<footer class="hero__f">'+
+        '<span class="hero__p"><span class="pr">'+R$(c.now)+'</span><s>'+R$(c.was)+'</s></span>'+
+        '<button class="b b--p" data-a="addcombo" data-id="'+c.id+'">'+
+          'Add combo \u00b7 '+R$(c.now)+'</button>'+
+      '</footer></section>';
+  }
+
+  /* ---------------------------------------------------------- mood cards */
+  let moodSet='open';
+  function moodRow(which){
+    moodSet=which||moodSet;
+    const list=MOODS[moodSet]||MOODS.open;
+    return '<div class="mood" data-set="'+moodSet+'">'+
+      '<div class="mood__h">'+(moodSet==='open'?'What are you in the mood for?'
+        :moodSet==='mood'?'Want me to push it further?'
+        :'Anything else with that?')+'</div>'+
+      '<div class="mood__g">'+list.map(m=>
+        '<button class="mc mc--'+m[3]+'" data-a="mood" data-say="'+esc(m[2])+'">'+
+          '<span class="mc__i" aria-hidden="true">'+m[0]+'</span>'+
+          '<span class="mc__t">'+esc(m[1])+'</span></button>').join('')+
+      '</div></div>';
+  }
+  /* Swap the set in place while you're still on the opening screen — after
+     an add, "craving spicy" is the wrong question and "add a drink" is the
+     right one. */
+  function setMood(which){
+    const el=th.querySelector('.mood'); if(!el) return;
+    const G=M.g();
+    const paint=()=>{
+      el.outerHTML=moodRow(which);
+      const n=th.querySelector('.mood');
+      if(G&&n) G.from(n.querySelectorAll('.mc'),
+        {y:10,opacity:0,duration:.3,stagger:.04,ease:'power3.out',clearProps:'transform'});
+    };
+    if(!G){ paint(); return; }
+    G.to(el,{opacity:0,y:-6,duration:.18,ease:'power2.in',onComplete:paint});
+  }
+
   function welcome(){
+    const c=Menu.captain();
     const el=document.createElement('div');
     el.className='wel';
     el.innerHTML=
-      '<div class="m m--ai">'+
+      '<div class="m m--ai wel__hi">'+
         '<div class="mark mark--sm">'+IC.spark+'</div>'+
         '<div class="say">'+
-          '<em class="hi">Vanakkam!</em> I\u2019m <b class="nm">Petpooja AI</b>, '+
-          'your virtual captain. What are you eating today?'+
-          '<div class="t">'+now()+'</div>'+
+          '<em class="hi">Vanakkam!</em> <span class="wel__q">What are you craving?</span>'+
         '</div>'+
       '</div>'+
-      '<div class="grid2">'+
-      [['\ud83c\udf7d\ufe0f','Recommend something','Recommend something'],
-       ['\ud83e\udd57','Veg options','Veg only'],
-       ['\ud83d\udd25',"What's special today?","What's special today?"],
-       ['\ud83c\udf36\ufe0f','Spicy dishes','Something spicy'],
-       ['\u2b50','Show bestsellers','Show bestsellers'],
-       ['\ud83d\udcb0','Under \u20b9200','Anything under \u20b9200'],
-       ['\ud83c\udf57','Non-veg options','Non-veg options'],
-       ['\ud83d\udc65','Meal for two','Meal for two']]
-      .map(q=>'<button data-say="'+esc(q[2])+'"><i>'+q[0]+'</i><span>'+esc(q[1])+'</span></button>').join('')+
-      '</div>';
+      (c?heroCard(c):'')+
+      moodRow('open');
     th.appendChild(el);
+
     const G=M.g();
     if(G){
-      G.from(el.querySelector('.m'),{y:12,opacity:0,duration:.44,ease:'power3.out'});
-      G.from(el.querySelectorAll('.grid2 button'),
-        {y:14,opacity:0,duration:.4,stagger:.045,ease:'power3.out',delay:.18});
+      const hero=el.querySelector('.hero');
+      G.from(el.querySelector('.wel__hi'),{y:10,opacity:0,duration:.4,ease:'power3.out'});
+      if(hero) G.from(hero,{y:18,opacity:0,scale:.985,duration:.52,
+        ease:'power3.out',delay:.1,clearProps:'transform'});
+      G.from(el.querySelectorAll('.mc'),
+        {y:14,opacity:0,duration:.38,stagger:.05,ease:'power3.out',delay:.26,clearProps:'transform'});
+      M.aiEdge(hero);
     }
-    /* No suggestion chips on the empty screen. The starters directly above
-       them said the same thing twice, and two rows of prompts on a blank
-       page is a menu, not an opening. */
+    /* No chip shelf here — the combo and the moods ARE the suggestions. */
     setChips([]);
   }
 
@@ -606,10 +663,48 @@ const UI=(function(){
   /* The native popover API puts this in the top layer, so the order widget's
      own overflow:hidden can't clip it, and Esc plus click-outside come free.
      Where it isn't supported we fall back to a class and a scrim. */
+  /* A look inside the combo without leaving the screen. Deliberately the
+     same top-layer popover the kitchen note uses, not a bottom sheet — the
+     rule that everything happens in the chat still holds, and a sheet that
+     covers the conversation is the thing that rule exists to prevent. */
+  function comboPeek(c){
+    const pop=document.getElementById('ntpop');
+    document.getElementById('ntpopBody').innerHTML=
+      '<div class="peek">'+
+        '<div class="peek__h">'+IC.spark+'<span>'+esc(c.k)+'</span></div>'+
+        '<h3 class="peek__n">'+esc(c.n)+'</h3>'+
+        '<div class="peek__l">'+c.lines.map(l=>
+          '<div class="peek__i"><img '+Menu.img(l.it)+'>'+
+          '<span class="peek__in"><span class="veg'+(l.it.veg?'':' veg--n')+'"></span>'+
+          esc(l.it.n)+'</span>'+
+          '<span class="peek__q">'+(l.q>1?'\u00d7'+l.q:'')+'</span>'+
+          '<span class="peek__p">'+R$(l.sub)+'</span></div>').join('')+
+        '</div>'+
+        '<div class="peek__f"><span>Set price</span>'+
+          '<b>'+R$(c.now)+'</b><s>'+R$(c.was)+'</s></div>'+
+      '</div>';
+    document.querySelector('.ntp__f').innerHTML=
+      '<button class="b b--p b--bl" data-a="addcombo" data-id="'+c.id+'">'+
+        'Add combo \u00b7 '+R$(c.now)+'</button>';
+    noteFrom=null;
+    if(typeof pop.showPopover==='function'){ try{ pop.showPopover(); }catch(e){ pop.classList.add('on'); } }
+    else pop.classList.add('on');
+    const G=M.g();
+    if(G){
+      G.fromTo(pop,{y:14,opacity:0},{y:0,opacity:1,duration:.3,ease:'power3.out'});
+      G.from(pop.querySelectorAll('.peek__i'),{y:8,opacity:0,duration:.26,stagger:.04});
+    }
+  }
+
   let noteFrom=null;
   function noteOpen(btn){
     const pop=document.getElementById('ntpop');
     document.getElementById('ntpopBody').innerHTML=notesBlock();
+    /* The combo peek borrows this popover and swaps the footer for its own
+       Add button, so put Done back rather than inheriting whatever the last
+       caller left behind. */
+    document.querySelector('.ntp__f').innerHTML=
+      '<button class="b b--p b--bl" data-a="ntdone">Done</button>';
     noteFrom=btn||null;
     if(btn) btn.setAttribute('aria-expanded','true');
     if(typeof pop.showPopover==='function'){ try{ pop.showPopover(); }catch(e){ pop.classList.add('on'); } }
@@ -1032,6 +1127,23 @@ const UI=(function(){
                           setTimeout(()=>{ if(Chats.activeId()!==curId){ } syncTitle(); },420); break;
 
         case 'opt': wOptions(Menu.def(b.dataset.id),null); break;
+        case 'mood':{
+          M.tap(b,.97);
+          /* It goes into the conversation as something you SAID — the whole
+             point is that the assistant stays the interface. */
+          /* No setMood here: sending removes the whole opening screen, moods
+             included, and the conversation's own follow-ups take over. The
+             'mood' set is for the case where the screen survives. */
+          setTimeout(()=>send(b.dataset.say,b),120);
+          break;
+        }
+        case 'combodetail':{
+          const c=Menu.combo(b.dataset.id); if(!c) break;
+          M.tap(b,.985);
+          comboPeek(c);
+          break;
+        }
+
         case 'ntopen': noteOpen(b); break;
         case 'ntdone': noteClose(); break;
 
@@ -1053,11 +1165,17 @@ const UI=(function(){
             for(let k=0;k<l.q;k++) Cart.add(cfg);
           });
           M.tap(b,.94);
+          if(b.closest('.ntp')) noteClose();
           b.textContent='Added';b.classList.add('b--ok');b.disabled=true;
           const im=b.closest('.cb').querySelector('img');
           if(im) M.fly(im,cartBtn,im.currentSrc||im.src);
           toast(c.n+' added \u00b7 saved '+R$(c.off));
-          setChips(AI.chips());
+          /* Still on the opening screen: swap the moods for follow-ups and
+             let the captain say something, rather than dumping a chip row. */
+          if(th.querySelector('.mood')){
+            setMood('added');
+            setTimeout(()=>{ M.in(aiBub('Good pick. Added to your order.'),1); end(); },420);
+          }else setChips(AI.chips());
           break;
         }
 

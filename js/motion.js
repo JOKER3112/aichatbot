@@ -51,20 +51,18 @@ const M=(function(){
         {xPercent:120,opacity:0,duration:.72,ease:'power2.out'});
     },
     /* ------------------------------------------------------ the mesh
-       Each field wanders instead of breathing. One yoyo tween on x, y and
-       scale together traces a straight line back and forth — symmetrical,
-       and the eye picks the rhythm up in about two seconds. So x, y and
-       scale each get their OWN tween with a different duration, and the
-       durations are chosen not to divide into one another. The composite
-       path is a slow Lissajous figure: it does eventually repeat, but only
-       after the lowest common multiple of four odd periods, which is far
-       longer than anyone watches a loading state.
+       Two fields, and while the assistant is working they travel sideways
+       past each other rather than breathing in place. That lateral pass is
+       the whole effect: the warm one crosses right while the cool one
+       crosses left, so the blend between them sweeps across the screen
+       instead of pulsing.
 
-       Directions alternate per field as well, so they drift apart and back
-       rather than all leaning the same way.
+       x, y and scale still get separate tweens on periods that don't divide
+       into each other, so the vertical wander never syncs up with the
+       horizontal pass and the loop has no visible beat.
 
-       Drifts only while the assistant is working — a perpetual loop behind
-       an idle screen is a battery cost for something nobody is looking at. */
+       Drifts only while working — a perpetual loop behind an idle screen is
+       a battery cost for something nobody is looking at. */
     mesh(on){
       const G=g(), amb=document.getElementById('amb'), app=document.getElementById('app');
       if(app) app.classList.toggle('busy',!!on);   /* opacity is CSS's job */
@@ -76,10 +74,10 @@ const M=(function(){
         return;
       }
       const drift=[
-        { x: 19, y:-14, s:1.16, dx:5.3, dy:7.1, ds:9.7  },
-        { x:-23, y: 12, s:0.86, dx:6.7, dy:4.3, ds:11.3 },
-        { x: 14, y: 18, s:1.12, dx:8.9, dy:5.9, ds:7.9  },
-        { x:-17, y:-16, s:0.90, dx:4.7, dy:9.3, ds:12.7 },
+        /* warm field: right, slow vertical drift, slower breath */
+        { x:  42, y: -12, s:1.14, dx:4.9, dy:7.3, ds:11.7 },
+        /* cool field: left, on periods that share no factor with the above */
+        { x: -46, y:  14, s:0.88, dx:6.1, dy:9.7, ds:8.3  },
       ];
       blobs.forEach((b,k)=>{
         const p=drift[k%drift.length];
@@ -88,6 +86,13 @@ const M=(function(){
         G.to(b,{yPercent:p.y,duration:p.dy,repeat:-1,yoyo:true,ease:'sine.inOut'});
         G.to(b,{scale:p.s,  duration:p.ds,repeat:-1,yoyo:true,ease:'sine.inOut'});
       });
+    },
+    /* The hero card's edge: a slow travelling highlight, not a pulse. */
+    aiEdge(el){
+      const G=g(); if(!G||!el) return;
+      const gl=el.querySelector('.hero__glow');
+      if(gl) G.fromTo(gl,{xPercent:-40},{xPercent:40,duration:6.5,
+        repeat:-1,yoyo:true,ease:'sine.inOut'});
     },
     tap(el,to){const G=g();if(!G||!el)return;
       G.timeline().to(el,{scale:to||.96,duration:.08}).to(el,{scale:1,duration:.22,ease:'power3.out'});},
