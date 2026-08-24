@@ -45,7 +45,9 @@
   --pad:clamp(12px,4.2vw,16px);
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
-  --r-sm:12px; --r-md:16px; --r-lg:20px; --r-pill:999px;
+  /* Dropped a notch for phone density — 16px on a 260px-wide card reads
+     as a much rounder shape than 16px on a desktop panel. */
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-pill:999px;
 
   /* The agent's column. Everything the assistant produces — bubble,
      widget, carousel, combo card, starters — starts on this line, so the
@@ -108,7 +110,7 @@ svg[data-i]{fill:none!important;stroke:currentColor;stroke-width:1.7;
 
 html,body{margin:0;padding:0;height:100%;width:100%;max-width:100%;
   overflow-x:hidden;overscroll-behavior-y:none;}
-body{font:400 15px/1.45 var(--f);color:var(--text);background:var(--bg);
+body{font:400 14px/1.5 var(--f);color:var(--text);background:var(--bg);
   -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-y:hidden;}
 button,input,textarea{font:inherit;color:inherit;}
 button{border:0;background:none;cursor:pointer;}
@@ -163,25 +165,25 @@ img{display:block;max-width:100%;}
    an image, it doesn't hide a saturated block. Nearly opaque now, with the
    blur kept for the edge where content passes under it. */
 .hd{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;
-  gap:10px;padding:calc(14px + var(--safe-t)) var(--pad) 14px;background:var(--header);
+  gap:10px;padding:calc(11px + var(--safe-t)) var(--pad) 11px;background:var(--header);
   backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
   border-bottom:1px solid var(--line-soft);}
 .hd__l{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
 .hd__r{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
 .hd__t{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.hd__n{font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hd__n{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* 10px of padding matches the switcher pill's inset so the status line sits
    under the title text, not under the pill's edge. */
 .hd__s{padding-left:10px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:5px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hd__dot{width:6px;height:6px;border-radius:50%;background:var(--veg);flex:0 0 6px;}
 
-.mark{position:relative;width:39px;height:39px;flex:0 0 39px;border-radius:19px;
+.mark{position:relative;width:34px;height:34px;flex:0 0 34px;border-radius:17px;
   background:linear-gradient(135deg,#F36A20 0%,#F2CAB5 50%,#F2AA83 100%);
   display:grid;place-items:center;box-shadow:0 0 22px rgba(243,106,32,.22);}
 .mark::after{content:'';position:absolute;inset:3px;border-radius:16px;
   background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.85) 0%,rgba(255,255,255,.06) 42%,rgba(255,255,255,0) 70%);}
-.mark svg{position:relative;z-index:1;width:17px;height:17px;fill:#3A1400;}
+.mark svg{position:relative;z-index:1;width:15px;height:15px;fill:#3A1400;}
 /* Was 26px, which put the mark on a par with the text it sits beside. It's
    an attribution, not a participant — smaller, and the bubble leads. */
 .mark--sm{width:var(--ava);height:var(--ava);flex-basis:var(--ava);border-radius:50%;}
@@ -194,10 +196,10 @@ img{display:block;max-width:100%;}
 .mark--lg::after{inset:5px;border-radius:27px;}
 .mark--lg svg{width:28px;height:28px;}
 
-.ico{position:relative;width:40px;height:40px;flex:0 0 40px;border-radius:58px;
+.ico{position:relative;width:36px;height:36px;flex:0 0 36px;border-radius:58px;
   background:var(--glass);border:1px solid var(--line);color:var(--text);
   backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:grid;place-items:center;}
-.ico svg{width:20px;height:20px;fill:currentColor;}
+.ico svg{width:18px;height:18px;fill:currentColor;}
 .pill{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;
   border-radius:10px;background:var(--brand);color:var(--brand-ink);border:2px solid var(--bg);
   font-size:11px;font-weight:600;line-height:1;display:none;place-items:center;}
@@ -220,7 +222,7 @@ img{display:block;max-width:100%;}
    jumped upward the instant you replied to it. */
 /* Only two words wear the brand: the greeting and the name. */
 .wel .hi,.wel .nm{font-style:normal;font-weight:600;color:var(--brand);}
-.wel .say{font-size:17px;line-height:1.45;}
+
 [data-theme='light'] .wel .hi,
 [data-theme='light'] .wel .nm{color:var(--brand-dark);}
 .wel .say .t{margin-top:8px;}
@@ -239,11 +241,14 @@ img{display:block;max-width:100%;}
   padding-left:var(--lane);padding-right:var(--pad);min-width:0;}
 .m--u{justify-content:flex-end;}
 .m--ai{flex-direction:column;align-items:stretch;gap:9px;}
-.say{font-size:15px;line-height:1.5;letter-spacing:-.1px;color:var(--text);
+.say{font-size:14.5px;line-height:1.5;letter-spacing:-.1px;color:var(--text);
   min-width:0;overflow-wrap:anywhere;word-break:break-word;}
 .say b{font-weight:600;}
 .say .sub{display:block;margin-top:5px;font-size:13px;color:var(--text-2);}
 .say .t{margin-top:7px;font-size:11px;color:var(--text-3);}
+/* The follow-up question. Same bubble, one step quieter than the answer —
+   it reads as the assistant still talking, not as a control. */
+.ask{display:block;margin-top:6px;color:var(--text-2);}
 /* Only the user speaks in a bubble now. */
 .bub{max-width:84%;min-width:0;padding:11px 14px;
   font-size:15px;line-height:1.45;overflow-wrap:anywhere;word-break:break-word;}
@@ -281,35 +286,43 @@ img{display:block;max-width:100%;}
    everything else, which says "this one" far louder than an edge can. */
 .w--hot{border-color:var(--line)!important;}
 .w.done .w__d .go{color:var(--text-2);}
-.w__h{display:flex;align-items:center;gap:8px;padding:12px 14px 0;min-width:0;}
+.w__h{display:flex;align-items:center;gap:8px;padding:11px 12px 0;min-width:0;}
 .w__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .w__h .n{font-size:11px;color:var(--text-3);flex:0 0 auto;}
-.w__b{padding:11px 14px 13px;min-width:0;}
-.w__f{display:flex;align-items:center;gap:9px;padding:11px 14px;flex-wrap:wrap;
+/* A widget that renders the whole menu was 25 rows tall — a 1500px card
+   inside a scrolling thread, which means two scroll contexts fighting and
+   no way to see the widget's own footer. Long bodies scroll themselves. */
+.w__b{padding:10px 12px 11px;min-width:0;max-height:56dvh;overflow-y:auto;
+  scrollbar-width:none;overscroll-behavior:contain;}
+.w__b::-webkit-scrollbar{display:none;}
+/* Short ones must not gain a scrollbar or clip a focused field's outline. */
+.w--sug .w__b,.w--short .w__b{max-height:none;overflow:visible;}
+.w__f{display:flex;align-items:center;gap:9px;padding:10px 12px;flex-wrap:wrap;
   border-top:1px solid var(--line-soft);background:var(--card-2);min-width:0;}
 .w__f .pr{flex:1;}
 
-.w__d{display:none;align-items:center;gap:8px;padding:12px 14px;font-size:13px;min-width:0;}
+/* A finished step stops being a card. It's a line in the conversation —
+   a tick, what you settled, and a way back — because a box is for something
+   that still wants your attention, and this one is done. Four resolved
+   widgets used to stack up as four boxes you had to read past. */
+.w__d{display:none;align-items:center;gap:7px;padding:2px 0 0;
+  font-size:13px;min-width:0;}
 .w.done .w__h,.w.done .w__b,.w.done .w__f{display:none;}
 .w.done .w__d{display:flex;}
-/* Resolved: same surface, quieter contents. It used to swap to a different
-   fill, which made a finished step look like a different kind of object. */
-.w.done{opacity:.78;}
-.w__d svg{width:15px;height:15px;color:var(--veg);flex:0 0 15px;}
-.w__d .k{color:var(--text-2);flex:0 0 auto;}
-.w__d b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.w__d .go{margin-left:auto;flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-2);}
-.w__d .go:hover{color:var(--brand);}
+.w.done{background:none!important;border-color:transparent!important;
+  box-shadow:none!important;backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  margin-block:-2px;padding:0;overflow:visible;}
+.w__d svg{width:14px;height:14px;color:var(--veg);flex:0 0 14px;}
+.w__d .k{color:var(--text-3);flex:0 0 auto;}
+.w__d b{font-weight:500;color:var(--text-2);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.w__d .go{margin-left:auto;flex:0 0 auto;font-size:12px;font-weight:500;
+  color:var(--text-3);text-decoration:underline;text-underline-offset:2px;}
+.w__d .go:hover{color:var(--text);}
 
-.row{display:flex;align-items:center;gap:10px;font-size:13px;min-width:0;}
-.row+.row{margin-top:9px;}
-.row .g{flex:1;min-width:0;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.row b{flex:0 0 auto;font-weight:500;font-variant-numeric:tabular-nums;}
-.rule{height:1px;background:var(--line-soft);margin:11px 0;}
-.tot{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;min-width:0;}
-.tot b{margin-left:auto;flex:0 0 auto;font-variant-numeric:tabular-nums;}
-.note{font-size:11px;color:var(--text-3);margin-top:8px;}
+/* (.row / .tot / .note now live with the bill, further down.) */
 
 /* --------------------------- variant chips -------------------------------
    These were rounded-rectangle buttons stacking their label over a price
@@ -323,7 +336,7 @@ img{display:block;max-width:100%;}
    width open, and the label never has to know it exists.
    -------------------------------------------------------------------------- */
 .opts{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
-.ob{position:relative;min-height:38px;padding:0 14px;border-radius:var(--r-pill);
+.ob{position:relative;min-height:32px;padding:0 12px;border-radius:var(--r-pill);
   background:var(--glass);border:1px solid var(--line);
   font-size:13px;font-weight:500;color:var(--text);
   display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;
@@ -340,7 +353,7 @@ img{display:block;max-width:100%;}
 .ob[aria-pressed='true'] small{color:rgba(255,255,255,.85);}
 :root{--tk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");}
 
-.cr{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:9px 11px;
+.cr{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:8px 10px;
   border-radius:var(--r-sm);background:var(--field);border:1px solid var(--line-soft);
   text-align:left;min-width:0;}
 .cr+.cr{margin-top:7px;}
@@ -382,15 +395,15 @@ img{display:block;max-width:100%;}
 .fl__box{position:relative;display:block;min-width:0;cursor:text;
   background:var(--field);border-radius:8px;}
 
-.fl__box input,.fl__box textarea{display:block;width:100%;min-width:0;height:48px;
-  padding:0 12px;margin:0;border:0;outline:0;background:none;color:var(--text);
+.fl__box input,.fl__box textarea{display:block;width:100%;min-width:0;height:44px;
+  padding:0 11px;margin:0;border:0;outline:0;background:none;color:var(--text);
   font-size:15px;font-weight:500;border-radius:8px;-webkit-appearance:none;appearance:none;}
-.fl__box textarea{height:auto;min-height:76px;padding:13px 12px 11px;line-height:1.45;
+.fl__box textarea{height:auto;min-height:70px;padding:11px 11px 10px;line-height:1.45;
   font-weight:400;resize:none;}
 
 /* Default state: the label IS the placeholder, sitting inside the field. */
 .fl__lab{position:absolute;left:0;top:0;transform-origin:top left;
-  transform:translate(12px,13px);max-width:calc(100% - 24px);
+  transform:translate(11px,11px);max-width:calc(100% - 24px);
   font-size:15px;font-weight:400;line-height:22px;color:var(--text-3);
   pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:transform .17s cubic-bezier(.2,0,0,1),color .17s,font-weight .17s;}
@@ -426,7 +439,7 @@ img{display:block;max-width:100%;}
 .fl em{display:block;font-size:11px;font-style:normal;line-height:1.4;
   color:var(--nonveg);margin:6px 0 0;padding-left:12px;}
 
-.fl .cnt{position:absolute;right:12px;top:0;height:48px;display:flex;align-items:center;
+.fl .cnt{position:absolute;right:11px;top:0;height:44px;display:flex;align-items:center;
   font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;
   pointer-events:none;transition:color .2s,opacity .2s;}
 .fl .cnt.ok{color:var(--veg);}
@@ -436,12 +449,12 @@ img{display:block;max-width:100%;}
    reserves room on both flanks so a full number can't run under the count. */
 .fl--tel .fl__box input{padding-left:48px;padding-right:58px;
   letter-spacing:.04em;font-variant-numeric:tabular-nums;}
-.fl--tel .pre{position:absolute;left:12px;top:0;height:48px;display:flex;align-items:center;
+.fl--tel .pre{position:absolute;left:11px;top:0;height:44px;display:flex;align-items:center;
   font-size:15px;font-weight:500;color:var(--text-2);pointer-events:none;transition:color .2s;}
 .fl--tel .fl__box input:focus~.pre{color:var(--text);}
 .fl--tel .fl__lab{transform:translate(12px,-9px) scale(.786);font-weight:500;color:var(--text-2);}
 .fl--tel .fl__ol legend{max-width:100%;}
-.fl--tel .tick{position:absolute;right:12px;top:15px;width:18px;height:18px;
+.fl--tel .tick{position:absolute;right:11px;top:13px;width:18px;height:18px;
   border-radius:50%;background:var(--veg);display:grid;place-items:center;
   opacity:0;transform:scale(.5);pointer-events:none;}
 .fl--tel .tick svg{width:11px;height:11px;color:#fff;}
@@ -449,7 +462,7 @@ img{display:block;max-width:100%;}
 .fl--tel.done .cnt{opacity:0;}
 
 /* --------------------------------- chips --------------------------------- */
-.chip{flex:0 0 auto;min-height:38px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;
+.chip{flex:0 0 auto;min-height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;
   border-radius:var(--r-pill);background:var(--glass);border:1px solid var(--line);
   font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;}
 .chip--b{border-color:rgba(243,106,32,.45);background:rgba(243,106,32,.12);color:var(--brand);}
@@ -505,7 +518,7 @@ img{display:block;max-width:100%;}
    money row — price and portion stacked on the left, Customize quiet, and
    the price ON the Add button so you commit knowing the number.
    -------------------------------------------------------------------------- */
-.fc{width:min(76vw,272px);border-radius:18px;overflow:hidden;background:var(--card);
+.fc{width:min(74vw,252px);border-radius:16px;overflow:hidden;background:var(--card);
   border:1px solid var(--line);}
 
 .fc__im{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--glass-2);}
@@ -523,7 +536,7 @@ img{display:block;max-width:100%;}
 .tag--sp{background:rgba(232,107,88,.92);color:#fff;border-color:transparent;}
 
 .fc__b{padding:12px 13px 13px;min-width:0;}
-.fc__n{font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.25;
+.fc__n{font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* One metadata row: rating, how many rated it, then the diet mark. */
@@ -545,7 +558,7 @@ img{display:block;max-width:100%;}
 /* Money row. Price and portion stack so the number owns its own line. */
 .fc__f{display:flex;align-items:center;gap:9px;margin-top:13px;min-width:0;}
 .fc__p{flex:0 0 auto;min-width:0;}
-.fc__p .pr{display:block;font-size:18px;font-weight:600;letter-spacing:-.02em;
+.fc__p .pr{display:block;font-size:16.5px;font-weight:600;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;line-height:1.15;}
 .fc__p small{display:block;font-size:11px;color:var(--text-3);margin-top:2px;}
 /* One action, and the line under it that replaces the Customize button. */
@@ -558,15 +571,15 @@ img{display:block;max-width:100%;}
 .fc__f .b+.b{margin-left:0;}
 
 /* -------------------------------- buttons -------------------------------- */
-.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;
-  padding:0 14px;border-radius:var(--r-pill);font-size:13px;font-weight:500;
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;
+  padding:0 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:500;
   white-space:nowrap;overflow:hidden;min-width:0;transition:background .18s,opacity .18s;}
 .b svg{width:15px;height:15px;fill:currentColor;flex:0 0 15px;}
 .b:disabled{opacity:.5;pointer-events:none;}
 .b--p{background:var(--brand);color:var(--brand-ink);}
 .b--p:hover{background:var(--brand-dark);}
 .b--g{background:transparent;border:1px solid var(--line);}
-.b--bl{width:100%;min-height:50px;font-size:15px;}
+.b--bl{width:100%;min-height:46px;font-size:14px;}
 .b--ok{background:var(--veg-deep);color:#fff;}
 /* --------------------------- add-on suggestions ---------------------------
    This was three floating mini-cards on a horizontal rail: three separate
@@ -610,7 +623,7 @@ img{display:block;max-width:100%;}
 .nt__h{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
   color:var(--text-2);margin-bottom:9px;}
 .nt__c{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;min-width:0;}
-.nb{min-height:32px;padding:0 11px;border-radius:var(--r-pill);
+.nb{min-height:30px;padding:0 10px;border-radius:var(--r-pill);
   background:var(--glass);border:1px solid var(--line-soft);
   font-size:12.5px;font-weight:500;color:var(--text-2);
   display:inline-flex;align-items:center;gap:5px;max-width:100%;
@@ -716,7 +729,7 @@ img{display:block;max-width:100%;}
    ========================================================================== */
 .wel{padding:2px 0 8px;}
 .wel__hi{margin-bottom:2px;}
-.wel .say{font-size:17px;line-height:1.45;max-width:34ch;}
+.wel .say{font-size:16px;line-height:1.45;max-width:34ch;}
 .wel__q{display:block;margin-top:1px;}
 .wel .hi{font-style:normal;font-weight:600;color:var(--brand);}
 [data-theme='light'] .wel .hi{color:var(--brand-dark);}
@@ -734,8 +747,8 @@ img{display:block;max-width:100%;}
    fixed height and every card is absolutely positioned in it, so reordering
    is a transform change and nothing reflows.
    ======================================================================== */
-.sk{margin:14px 0 0;min-width:0;}
-.sk__h{display:flex;align-items:center;gap:6px;padding:0 var(--pad) 10px;
+.sk{margin:12px 0 0;min-width:0;}
+.sk__h{display:flex;align-items:center;gap:6px;padding:0 var(--pad) 8px;
   font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   color:var(--text-3);}
 .sk__h svg{width:13px;height:13px;flex:0 0 13px;fill:var(--ai-2);}
@@ -751,7 +764,7 @@ img{display:block;max-width:100%;}
    needs 136px for its five rows, the image gets 124, and the stage adds the
    22px the two cards behind stick out by. Sized by eye it was 19px short,
    which `overflow:hidden` turned into text sliced off mid-line. */
-.sk__stage{position:relative;height:282px;margin-inline:var(--pad);min-width:0;}
+.sk__stage{position:relative;height:269px;margin-inline:var(--pad);min-width:0;}
 
 /* OPAQUE. This is the whole reason the stack looked broken: the card was
    using the shared widget fill, which is rgba(...,.84) — fine for a widget
@@ -762,8 +775,8 @@ img{display:block;max-width:100%;}
    A stack has to be solid. --card is the same colour the translucent fill
    resolves to over the page, so nothing looks different — it just stops
    being see-through. */
-.sk__c{position:absolute;inset:0 0 auto;height:260px;
-  border-radius:20px;overflow:hidden;min-width:0;
+.sk__c{position:absolute;inset:0 0 auto;height:247px;
+  border-radius:18px;overflow:hidden;min-width:0;
   background:var(--card);
   border:1px solid var(--line-soft);
   box-shadow:0 10px 30px -8px rgba(0,0,0,.55);
@@ -774,7 +787,7 @@ img{display:block;max-width:100%;}
 [data-theme='light'] .sk__c{border-color:transparent;
   box-shadow:0 10px 28px -10px rgba(58,38,14,.34),0 1px 2px rgba(58,38,14,.06);}
 
-.sk__im{position:relative;height:124px;overflow:hidden;background:var(--glass-2);}
+.sk__im{position:relative;height:118px;overflow:hidden;background:var(--glass-2);}
 .sk__im img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
 /* Just enough scrim at the top for a badge to sit on any photograph. */
 .sk__im::after{content:'';position:absolute;inset:0;pointer-events:none;
@@ -790,9 +803,9 @@ img{display:block;max-width:100%;}
    assembled rather than picked. */
 .sk__tag--ai{background:rgba(255,255,255,.94);color:#5B3FBE;border-color:transparent;}
 
-.sk__b{padding:12px 14px 12px;min-width:0;
-  display:flex;flex-direction:column;height:calc(100% - 124px);}
-.sk__n{margin:0;font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.2;
+.sk__b{padding:11px 12px 11px;min-width:0;
+  display:flex;flex-direction:column;height:calc(100% - 118px);}
+.sk__n{margin:0;font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.2;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sk__m{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;margin-top:5px;
   font-size:11.5px;color:var(--text-3);min-width:0;overflow:hidden;}
@@ -807,7 +820,7 @@ img{display:block;max-width:100%;}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sk__f{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:9px;min-width:0;}
 .sk__p{flex:0 0 auto;display:flex;align-items:baseline;gap:6px;
-  font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  font-size:17px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 .sk__p s{font-size:12px;font-weight:400;color:var(--text-3);}
 .sk__f .b{margin-left:auto;min-height:38px;}
 
@@ -842,7 +855,7 @@ img{display:block;max-width:100%;}
    was ever doing the work. The gradient is white at 4% — light, not colour,
    so it reads as a raised glass tile rather than a swatch. */
 .mc{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
-  gap:7px;min-height:76px;padding:11px 12px;border-radius:16px;overflow:hidden;
+  gap:6px;min-height:66px;padding:10px 11px;border-radius:14px;overflow:hidden;
   text-align:left;min-width:0;
   background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 62%),
              var(--card);
@@ -854,15 +867,15 @@ img{display:block;max-width:100%;}
              var(--card);
   box-shadow:var(--sh-1);}
 
-.mc__i{position:relative;z-index:1;font-size:20px;line-height:1;}
-.mc__t{position:relative;z-index:1;font-size:13px;font-weight:500;line-height:1.3;
+.mc__i{position:relative;z-index:1;font-size:18px;line-height:1;}
+.mc__t{position:relative;z-index:1;font-size:12.5px;font-weight:500;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;}
 
 /* ------------------------------ combo peek ------------------------------ */
 .peek{padding:14px 0 4px;min-width:0;}
 /* (.peek__h removed — the sheet has a real header now, so the card no
    longer carries its own kicker.) */
-.peek__n{margin:2px 0 12px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
+.peek__n{margin:2px 0 11px;font-size:17px;font-weight:600;letter-spacing:-.02em;}
 .peek__l{border-radius:12px;background:var(--glass);padding:4px 10px;min-width:0;}
 .peek__i{display:flex;align-items:center;gap:10px;padding:8px 0;min-width:0;}
 .peek__i+.peek__i{box-shadow:inset 0 1px 0 var(--line-soft);}
@@ -877,7 +890,7 @@ img{display:block;max-width:100%;}
   min-width:44px;text-align:right;}
 .peek__f{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-size:13px;
   color:var(--text-2);}
-.peek__f b{margin-left:auto;font-size:18px;font-weight:600;color:var(--text);
+.peek__f b{margin-left:auto;font-size:16.5px;font-weight:600;color:var(--text);
   font-variant-numeric:tabular-nums;}
 .peek__f s{color:var(--text-3);font-variant-numeric:tabular-nums;}
 
@@ -891,7 +904,7 @@ img{display:block;max-width:100%;}
    choice, not something to flick past.
    -------------------------------------------------------------------------- */
 .cbs{display:flex;flex-direction:column;gap:10px;min-width:0;}
-.cb{margin-inline:var(--lane) var(--pad);padding:13px 14px 14px;border-radius:var(--r-md);
+.cb{margin-inline:var(--lane) var(--pad);padding:11px 12px 12px;border-radius:var(--r-md);
   min-width:0;overflow:hidden;}
 
 .cb__h{display:flex;align-items:center;gap:8px;min-width:0;}
@@ -904,7 +917,7 @@ img{display:block;max-width:100%;}
   background:rgba(79,193,124,.14);color:var(--veg);}
 [data-theme='light'] .cb__sv{background:rgba(46,139,87,.12);color:#1F6B42;}
 
-.cb__n{margin:7px 0 0;font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.25;}
+.cb__n{margin:6px 0 0;font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.25;}
 .cb__d{margin:5px 0 0;font-size:13px;line-height:1.4;color:var(--text-2);}
 
 .cb__l{margin-top:11px;border-radius:12px;background:var(--glass);padding:4px 8px;min-width:0;}
@@ -921,7 +934,7 @@ img{display:block;max-width:100%;}
 
 .cb__f{display:flex;align-items:center;gap:10px;margin-top:12px;min-width:0;}
 .cb__p{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;min-width:0;}
-.cb__p .pr{font-size:19px;font-weight:600;letter-spacing:-.02em;
+.cb__p .pr{font-size:17px;font-weight:600;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
 .cb__p s{font-size:13px;color:var(--text-3);text-decoration-thickness:1px;
   font-variant-numeric:tabular-nums;}
@@ -930,7 +943,7 @@ img{display:block;max-width:100%;}
 /* ---------------------------- configured dish ---------------------------- */
 .bt__t{display:flex;gap:11px;min-width:0;}
 .bt__t img{width:66px;height:66px;flex:0 0 66px;border-radius:var(--r-sm);object-fit:cover;background:var(--glass-2);}
-.bt__n{font-size:16px;font-weight:600;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt__n{font-size:15px;font-weight:600;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sp{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-width:0;}
 .sp span{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--r-pill);
   font-size:11px;font-weight:400;background:var(--glass-2);color:var(--text-2);
@@ -939,22 +952,55 @@ img{display:block;max-width:100%;}
 .sp .x svg{width:10px;height:10px;fill:currentColor;flex:0 0 10px;}
 
 /* -------------------------------- order lines ---------------------------- */
-.ln{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-soft);min-width:0;}
+/* --------------------------- order lines ---------------------------------
+   Reworked for text hierarchy. The old row put the dish name at 13px — the
+   same size as its own price, its options line and the Edit link — so five
+   things on one row all shouted equally and you had to read every one to
+   find the dish.
+
+   Now there are three levels and only three: the dish (14px, the thing you
+   are looking for), what it costs (14px tabular, right-aligned so the
+   column scans), and everything else at 11px in a muted colour. Edit and
+   Remove stop being links in brand orange, which was two accent colours per
+   row before a total had even been printed.
+   -------------------------------------------------------------------------- */
+.ln{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft);min-width:0;}
 .ln:last-of-type{border-bottom:0;}
-.ln img{width:48px;height:48px;flex:0 0 48px;border-radius:10px;object-fit:cover;background:var(--glass-2);}
+.ln img{width:44px;height:44px;flex:0 0 44px;border-radius:9px;object-fit:cover;
+  background:var(--glass-2);}
 .ln__b{flex:1;min-width:0;}
-.ln__n{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ln__c{font-size:11px;color:var(--text-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Name and price on one line, so the eye runs down a single money column. */
+.ln__t{display:flex;align-items:baseline;gap:10px;min-width:0;}
+.ln__n{flex:1;min-width:0;font-size:14px;font-weight:500;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ln__p{flex:0 0 auto;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
+.ln__c{font-size:11px;color:var(--text-3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ln__x{font-size:11px;color:var(--nonveg);margin-top:2px;}
-.ln__f{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap;min-width:0;}
+.ln__f{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;}
 .stp{display:inline-flex;align-items:center;gap:2px;border-radius:var(--r-pill);
   background:var(--glass-2);padding:2px;flex:0 0 auto;}
-.stp button{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;}
-.stp button svg{width:14px;height:14px;fill:currentColor;}
-.stp span{min-width:20px;text-align:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
-.ln__p{margin-left:auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;flex:0 0 auto;}
-.lk{font-size:11px;font-weight:500;color:var(--brand);flex:0 0 auto;}
+.stp button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;}
+.stp button svg{width:13px;height:13px;}
+.stp span{min-width:20px;text-align:center;font-size:12.5px;font-weight:600;
+  font-variant-numeric:tabular-nums;}
+/* Quiet. These are corrections, not calls to action. */
+.lk{font-size:11.5px;font-weight:500;color:var(--text-3);flex:0 0 auto;
+  text-decoration:underline;text-underline-offset:2px;}
+.lk:hover{color:var(--text-2);}
 .lk--x{color:var(--text-3);}
+
+/* --------------------------------- the bill ------------------------------
+   Every line the same weight except the one you actually care about. */
+.row{display:flex;align-items:center;gap:10px;font-size:12.5px;min-width:0;}
+.row+.row{margin-top:7px;}
+.row .g{flex:1;min-width:0;color:var(--text-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.row b{flex:0 0 auto;font-weight:500;color:var(--text-2);font-variant-numeric:tabular-nums;}
+.tot{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;min-width:0;}
+.tot b{margin-left:auto;flex:0 0 auto;font-size:17px;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;}
+.note{font-size:11px;color:var(--text-3);margin-top:8px;}
 
 /* ------------------------------- confirmation ---------------------------- */
 .ok{text-align:center;padding:6px 2px 2px;}
@@ -962,7 +1008,7 @@ img{display:block;max-width:100%;}
   background:linear-gradient(135deg,#F36A20,#F2AA83);}
 .ok__r div{width:100%;height:100%;border-radius:50%;background:var(--card);display:grid;place-items:center;}
 .ok__r svg{width:32px;height:32px;color:var(--veg);stroke-width:2;}
-.ok h3{margin:0 0 5px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
+.ok h3{margin:0 0 5px;font-size:17px;font-weight:600;letter-spacing:-.02em;}
 .ok p{margin:0;font-size:13px;color:var(--text-2);}
 .ok__g{display:flex;gap:8px;margin-top:14px;min-width:0;}
 .ok__g div{flex:1;min-width:0;padding:10px;border-radius:var(--r-sm);background:var(--glass-2);text-align:left;}
@@ -1092,7 +1138,7 @@ img{display:block;max-width:100%;}
 .cp{position:relative;display:grid;align-items:end;align-content:end;gap:8px;min-width:0;
   grid-template-columns:auto minmax(0,1fr) auto auto;
   grid-template-areas:"cart input mic send";
-  min-height:62px;padding:10px;border-radius:68px;background:var(--composer);
+  min-height:56px;padding:9px;border-radius:68px;background:var(--composer);
   border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
   transition:border-color .25s,border-radius .3s ease;}
@@ -1170,14 +1216,14 @@ img{display:block;max-width:100%;}
 .ph span{position:absolute;inset:0;display:flex;align-items:center;
   font-size:15px;line-height:22px;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cbt{width:40px;height:40px;flex:0 0 40px;border-radius:48px;display:grid;place-items:center;
+.cbt{width:36px;height:36px;flex:0 0 36px;border-radius:48px;display:grid;place-items:center;
   background:var(--glass);border:1px solid var(--line);
   backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
-.cbt svg{width:20px;height:20px;fill:currentColor;}
+.cbt svg{width:18px;height:18px;fill:currentColor;}
 .cbt.rec{background:var(--brand);color:var(--brand-ink);border-color:transparent;}
-.snd{width:40px;height:40px;flex:0 0 40px;border-radius:48px;display:grid;place-items:center;
+.snd{width:36px;height:36px;flex:0 0 36px;border-radius:48px;display:grid;place-items:center;
   background:var(--brand);color:var(--brand-ink);border:1px solid rgba(255,255,255,.12);}
-.snd svg{width:20px;height:20px;fill:currentColor;}
+.snd svg{width:18px;height:18px;fill:currentColor;}
 .snd:disabled{opacity:.45;}
 
 .tst{position:fixed;left:50%;bottom:calc(140px + var(--safe-b));z-index:60;
@@ -1390,7 +1436,7 @@ img{display:block;max-width:100%;}
 
 .thk__w{position:relative;height:24px;width:100%;min-width:0;overflow:hidden;}
 .thk__w span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:500;letter-spacing:-.01em;color:var(--text);
+  font-size:15px;font-weight:500;letter-spacing:-.01em;color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:6px;}
 
 

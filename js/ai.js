@@ -203,20 +203,48 @@ const AI=(function(){
     return ch;
   }
 
-  function chips(){
-    if(window.order) return ['How long?','Track my order','Order again'];
+  /* ---------------------------------------------------------------- asks
+     This was a chip shelf: four taps offered after every single reply,
+     including "Dine-in / Delivery" as if picking a fulfilment mode were a
+     suggestion. That is a search UI wearing a chat's clothes — it hands the
+     work back to you and it makes the assistant look like a menu.
+
+     Zomato's own AI ordering pilot works the other way round: you describe
+     what you feel like — a craving, a budget, a constraint — and it asks a
+     follow-up. So this returns ONE short question, in the assistant's own
+     voice, appended to what it just said. No taps, and the answer is
+     whatever you'd type anyway.
+     (https://www.zomato.com/blog/introducing-zomato-ai-your-foodie-buddy/)  */
+  function ask(){
+    if(window.order)   return 'Want me to keep an eye on it?';
     if(!Cart.empty()){
-      const f=Cart.getFul(), c=[];
-      if(!Cart.raw().some(l=>Menu.item(l.id).c==='Drinks')) c.push('Add filter coffee');
-      if(!Cart.raw().some(l=>Menu.item(l.id).c==='Sweets')) c.push('Add a sweet');
-      if(!f.mode) c.push('Dine-in','Delivery');
-      c.push('Review order','Checkout');
-      return c.slice(0,5);
+      const f=Cart.getFul();
+      if(!f.mode)      return 'Eating in, or taking it away?';
+      if(Cart.missing().length>1) return 'Shall I take your details?';
+      return 'Anything else, or send it through?';
     }
-    if(S.cfg) return ['Make it full','Extra chutney','Something else'];
-    if(S.recs.length) return ['Give me the first one','Anything cheaper?','Show veg only'];
-    return ['Bestsellers','Something spicy','Veg only','Under ₹100'];
+    if(S.cfg)          return 'Want it changed, or shall I add it?';
+    if(S.recs.length)  return 'Any of those, or something else?';
+    return null;                     /* the opening screen asks its own */
   }
+  /* Kept as a no-op so nothing downstream has to care that the shelf is
+     gone; setChips([]) simply removes any row that is still on screen. */
+  function chips(){ return []; }
+
+  /* Every branch hands its action list back through here, so the follow-up
+     is appended once in one place rather than each branch remembering to.
+     Module scope on purpose: rec() and next() return through it as well. */
+  function out(A){
+    /* Nothing that already asks something gets a spoken question on top of
+       it. An options widget, a details form, a mode picker and the order
+       review each pose their own; adding "shall I take your details?" under
+       a form visibly asking for them is the assistant talking over itself. */
+    if(A.some(x=>x.t==='ask'||x.t==='form'||x.t==='sheet'||x.t==='built'||x.t==='combo')) return A;
+    const q=ask();
+    if(q&&A.length&&!A.some(x=>x.t==='nudge')) A.push({t:'nudge',h:q});
+    return A;
+  }
+
 
   function rec(f,A){
     if(f.veg!=null) S.pref.veg=f.veg;
@@ -237,8 +265,7 @@ const AI=(function(){
     }
     if(!l.length){
       A.push({t:'say',h:"No match for that. Want to see what's popular?"});
-      A.push({t:'chips',v:['Bestsellers','Something spicy','Veg only']});
-      return A;
+            return out(A);
     }
     const picks=l.slice(0,6); S.recs=picks;
     const bits=[];
@@ -250,8 +277,7 @@ const AI=(function(){
     A.push({t:'say',h:head.charAt(0).toUpperCase()+head.slice(1)+
       (f.max?' under ₹'+f.max:'')+'.<span class="sub">Trust me on these.</span>'});
     A.push({t:'rail',v:picks});
-    A.push({t:'chips',v:chips()});
-    return A;
+        return out(A);
   }
 
   function next(A){
@@ -259,7 +285,7 @@ const AI=(function(){
     if(!m.length){
       A.push({t:'say',h:'All set. Have a look before I send it to the kitchen.'});
       A.push({t:'sheet',v:'pay'});
-      return A;
+      return out(A);
     }
     if(m[0]==='mode'){
       const ask={id:'ask'+Date.now(),kind:'mode',label:'Order type',
@@ -267,14 +293,14 @@ const AI=(function(){
         opts:R.modes.map(x=>({id:x.id,label:x.label}))};
       S.ask=ask;
       A.push({t:'ask',v:ask});
-      return A;
+      return out(A);
     }
     /* Deliberately not restating the mode — the resolved card above already
        reads "Order type · Dine-in". Repeating it is the duplication the old
        flow had, just politer. */
     A.push({t:'say',h:'Last bit — '+(m.length===1?'one detail':'a couple of details')+" and I'll send it through."});
     A.push({t:'form',v:m});
-    return A;
+    return out(A);
   }
 
   function respond(p){
@@ -284,31 +310,28 @@ const AI=(function(){
     switch(p.i){
       case 'hi':
         say("Vanakkam. I'm your virtual captain — tell me what you're after and I'll set it up.");
-        A.push({t:'chips',v:['Bestsellers','Something spicy','Veg only','Under ₹100']});
-        return A;
+                return out(A);
 
       case 'combo':{
         const cs=Menu.combos(p.f);
         if(!cs.length){ say("Nothing bundled for that right now — want me to build one dish at a time?");
-          A.push({t:'chips',v:['Bestsellers','Veg only','Something spicy']}); return A; }
+           return out(A); }
         say(cs.length===1
           ? 'This one feeds '+cs[0].serves+'. Everything in it, one price.'
           : "Two ways to do it. Both are priced as a set, so they're cheaper than the parts.");
         A.push({t:'combo',v:cs.slice(0,3).map(c=>c.id)});
-        A.push({t:'chips',v:['Veg only','Non-veg options','Show bestsellers']});
-        return A;
+                return out(A);
       }
 
       case 'help':
         say('Describe a dish and I\'ll build it. Try <b>"full chicken biryani, spicy, no onion"</b> — one line, no back and forth.');
-        A.push({t:'chips',v:['Bestsellers','Something spicy','Show me dosas']});
-        return A;
+                return out(A);
 
       case 'ans':{
         const ask=S.ask; S.ask=null;
         A.push({t:'resolve',id:ask.id,v:p.ans.label});
         if(ask.kind==='mode'){Cart.setFul({mode:p.ans.id});return next(A);}
-        return A;
+        return out(A);
       }
 
       case 'rec':{
@@ -326,8 +349,7 @@ const AI=(function(){
         S.cfg=cfg;
         say('<b>'+esc(it.n)+'</b> — '+esc(it.d));
         A.push({t:'built',v:cfg});
-        A.push({t:'chips',v:chips()});
-        return A;
+                return out(A);
       }
 
       case 'order':{
@@ -336,8 +358,7 @@ const AI=(function(){
         const cfg=Menu.def(it.id); apply(cfg,p); S.cfg=cfg;
         say('Got it — <b>'+esc(it.n)+'</b>, exactly as you said.');
         A.push({t:'built',v:cfg});
-        A.push({t:'chips',v:chips()});
-        return A;
+                return out(A);
       }
 
       case 'pick':{
@@ -354,8 +375,7 @@ const AI=(function(){
         S.cfg=cfg;
         say('<b>'+esc(it.n)+'</b> — '+esc(it.d));
         A.push({t:'built',v:cfg});
-        A.push({t:'chips',v:chips()});
-        return A;
+                return out(A);
       }
 
       case 'edit':{
@@ -373,7 +393,7 @@ const AI=(function(){
         if(!ch.length){
           say("That doesn't apply to <b>"+esc(Menu.item(cfg.id).n)+"</b> — open Options and I'll show you what it does have.");
           A.push({t:'built',v:cfg});
-          return A;
+          return out(A);
         }
         S.cfg=cfg;
         if(inCart&&sig){
@@ -384,8 +404,7 @@ const AI=(function(){
           say('Done — '+ch.join(', ').toLowerCase()+'.');
           A.push({t:'built',v:cfg});
         }
-        A.push({t:'chips',v:chips()});
-        return A;
+                return out(A);
       }
 
       case 'more':{
@@ -393,43 +412,39 @@ const AI=(function(){
         if(!l){say('Nothing in the order yet.');return rec({},A);}
         Cart.bump(Menu.sig(l),p.q||1);
         say('Another <b>'+esc(Menu.item(l.id).n)+'</b> added.');
-        A.push({t:'chips',v:chips()});
-        return A;
+                return out(A);
       }
 
       case 'ful':
         if(Object.keys(p.ful).length) Cart.setFul(p.ful);
         if(Cart.empty()){
           say("Noted. Let's get some food in the order first.");
-          A.push({t:'chips',v:['Bestsellers','Something spicy']});
-          return A;
+                    return out(A);
         }
         return next(A);
 
       case 'cart':
         if(Cart.empty()){
           say('Your order is empty. Want a suggestion?');
-          A.push({t:'chips',v:['Bestsellers','Something spicy','Under ₹100']});
-          return A;
+                    return out(A);
         }
         say("Here's the order so far.");
         A.push({t:'sheet',v:'cart'});
-        return A;
+        return out(A);
 
       case 'pay':
         if(Cart.empty()){
           say('Nothing to send yet.');
-          A.push({t:'chips',v:['Bestsellers','Something spicy']});
-          return A;
+                    return out(A);
         }
         return next(A);
 
       case 'track':{
         const o=window.order;
-        if(!o){say('No live order right now.');return A;}
+        if(!o){say('No live order right now.');return out(A);}
         say('Being prepared — about <b>'+o.eta.lo+' minutes</b> to go.');
         A.push({t:'track',v:o});
-        return A;
+        return out(A);
       }
 
       default: return huh(A);
@@ -444,12 +459,11 @@ const AI=(function(){
       A.push({t:'rail',v:alts});
       S.recs=alts;
     }
-    return A;
+    return out(A);
   }
   function huh(A){
     A.push({t:'say',h:"Didn't catch that.<span class=\"sub\">Name a dish, or describe it — \"spicy, filling, under ₹200\" works.</span>"});
-    A.push({t:'chips',v:['Bestsellers','Something spicy','Veg only','Under ₹100']});
-    return A;
+        return out(A);
   }
 
   return { parse, respond, chips, S, next,

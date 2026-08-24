@@ -675,9 +675,14 @@ const UI=(function(){
     }
     const id=uid('ord');
     const lines=s.lines.map(l=>
+      /* Name and price share the top line so the money forms one column you
+         can run your eye down; the options, the stepper and the two
+         corrections sit under it, quieter. */
       '<div class="ln" data-sig="'+esc(l.sig)+'"><img '+Menu.img(l.it)+'>'+
-      '<div class="ln__b"><div class="ln__n">'+esc(l.it.n)+'</div>'+
-      (l.spec.length?'<div class="ln__c">'+esc(l.spec.join(' · '))+'</div>':'')+
+      '<div class="ln__b">'+
+        '<div class="ln__t"><span class="ln__n">'+esc(l.it.n)+'</span>'+
+        '<span class="ln__p">'+R$(l.total)+'</span></div>'+
+      (l.spec.length?'<div class="ln__c">'+esc(l.spec.join(' \u00b7 '))+'</div>':'')+
       (l.cfg.rm.length?'<div class="ln__x">No '+esc(l.cfg.rm.join(', '))+'</div>':'')+
       '<div class="ln__f"><div class="stp">'+
       '<button data-a="wq" data-w="'+id+'" data-sig="'+esc(l.sig)+'" data-d="-1" aria-label="One fewer">'+IC.minus+'</button>'+
@@ -685,7 +690,7 @@ const UI=(function(){
       '<button data-a="wq" data-w="'+id+'" data-sig="'+esc(l.sig)+'" data-d="1" aria-label="One more">'+IC.plus+'</button></div>'+
       '<button class="lk" data-a="wed" data-sig="'+esc(l.sig)+'">Edit</button>'+
       '<button class="lk lk--x" data-a="wdel" data-w="'+id+'" data-sig="'+esc(l.sig)+'">Remove</button>'+
-      '<span class="ln__p">'+R$(l.total)+'</span></div></div></div>').join('');
+      '</div></div></div>').join('');
 
     widget(id,{
       label:'Your order', count:s.t.n+' item'+(s.t.n===1?'':'s'),
@@ -1154,6 +1159,19 @@ const UI=(function(){
     const a=A[i], nx=d=>setTimeout(()=>play(A,i+1),M.red?0:(d||0));
     switch(a.t){
       case 'say':   M.in(aiBub(a.h),1);end();nx(180);break;
+      /* The follow-up is part of the message, not a row of buttons under
+         it — so it lands in the same bubble the assistant just spoke in. */
+      case 'nudge':{
+        const last=[].slice.call(th.querySelectorAll('.m--ai .say')).pop();
+        if(last){
+          const q=document.createElement('span');
+          q.className='ask'; q.textContent=a.h;
+          last.appendChild(q);
+          const G=M.g();
+          if(G) G.from(q,{opacity:0,y:4,duration:.3,delay:.1,ease:'power2.out'});
+        }else M.in(aiBub(esc(a.h)),1);
+        end();nx(0);break;
+      }
       case 'chips': setChips(a.v);end();nx(0);break;
       case 'rail':  rail(a.v);AI.setRecs(a.v);end();nx(180);break;
       case 'combo': comboSet(a.v);end();nx(180);break;
