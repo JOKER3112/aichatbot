@@ -220,30 +220,138 @@ const UI=(function(){
      talking; it just gets to the food in one screen instead of two.
      ====================================================================== */
 
-  /* --------------------------------------------------------- hero combo */
-  function heroCard(c){
-    return '<section class="hero" data-id="'+c.id+'">'+
-      '<span class="hero__glow" aria-hidden="true"></span>'+
-      '<header class="hero__k">'+IC.spark+'<span>Captain\u2019s combo</span></header>'+
-      '<button class="hero__tap" data-a="combodetail" data-id="'+c.id+'" '+
-        'aria-label="See what\u2019s in this combo">'+
-        '<span class="hero__im"><img '+Menu.img(c.hero)+'></span>'+
-        '<span class="hero__b">'+
-          '<span class="hero__n">'+esc(c.n)+'</span>'+
-          '<span class="hero__l">'+c.lines.map(l=>
-            esc(l.it.n)+(l.q>1?' \u00d7'+l.q:'')).join('<i>+</i>')+'</span>'+
-          '<span class="hero__m">'+
-            '<span class="st">'+IC.star+' '+c.r+'</span>'+
-            '<span class="dot"></span><span>'+c.n_items+' items</span>'+
-          '</span>'+
-          '<span class="hero__w">'+esc(c.why)+'</span>'+
-        '</span>'+
-      '</button>'+
-      '<footer class="hero__f">'+
-        '<span class="hero__p"><span class="pr">'+R$(c.now)+'</span><s>'+R$(c.was)+'</s></span>'+
-        '<button class="b b--p" data-a="addcombo" data-id="'+c.id+'">'+
-          'Add combo \u00b7 '+R$(c.now)+'</button>'+
-      '</footer></section>';
+  /* ===================== THE RECOMMENDATION STACK =====================
+     The combo used to be one tall hero card. On a real phone it ate most of
+     the screen before you'd scrolled, which pushed the moods and the
+     composer below the fold — the opposite of "get to the food fast".
+
+     So it's a stack: the combo on top, then four dishes behind it, and you
+     swipe through them. Same height as ONE card no matter how many are in
+     it, and a stack reads as "there's more here" in a way a carousel with a
+     peeking neighbour never quite does.
+
+     Everything below is layout and gesture. The DOM holds every card from
+     the start, in order, and each one is complete and addable — the drag
+     only reorders them. With JS half-loaded you still get the front card,
+     fully usable.
+     ==================================================================== */
+  function stkCard(x){
+    const combo=!!x.lines;
+    const it=combo?x.hero:x;
+    const price=combo?x.now:x.p;
+    const badge=combo
+      ? '<span class="sk__tag sk__tag--ai">'+IC.spark+' Captain\u2019s combo</span>'
+      : (x.best?'<span class="sk__tag">Bestseller</span>':'');
+    const sub=combo
+      ? x.lines.map(l=>esc(l.it.n)).join(' + ')
+      : esc(x.d);
+    const meta=combo
+      ? '<span class="st">'+IC.star+' '+x.r+'</span><span class="dot"></span>'+
+        '<span>'+x.n_items+' items</span>'
+      : '<span class="st">'+IC.star+' '+x.r+'</span><span class="dot"></span>'+
+        '<span class="dt"><span class="veg'+(x.veg?'':' veg--n')+'"></span>'+
+        (x.veg?'Veg':'Non-veg')+'</span>';
+    const add=combo
+      ? '<button class="b b--p" data-a="addcombo" data-id="'+x.id+'">Add \u00b7 '+R$(price)+'</button>'
+      : '<button class="b b--p" data-a="add" data-id="'+x.id+'"'+
+        ((x.g||[]).length?' data-opts="1"':'')+'>Add \u00b7 '+R$(price)+'</button>';
+    return '<article class="sk__c" data-id="'+x.id+'">'+
+      '<div class="sk__im"><img '+Menu.img(it)+'>'+(badge?'<div class="sk__tags">'+badge+'</div>':'')+'</div>'+
+      '<div class="sk__b">'+
+        '<h3 class="sk__n">'+esc(combo?x.n:x.n)+'</h3>'+
+        '<div class="sk__m">'+meta+'</div>'+
+        '<p class="sk__d">'+sub+'</p>'+
+        '<div class="sk__f">'+
+          '<span class="sk__p">'+R$(price)+
+            (combo?'<s>'+R$(x.was)+'</s>':'')+'</span>'+
+          add+
+        '</div></div></article>';
+  }
+
+  function stackBlock(){
+    const c=Menu.captain();
+    const cards=(c?[c]:[]).concat(Menu.picks(4));
+    return '<div class="sk" data-n="'+cards.length+'">'+
+      '<div class="sk__h">'+IC.spark+'<span>Picked for you</span>'+
+        '<span class="sk__ct"><b>1</b>/'+cards.length+'</span></div>'+
+      '<div class="sk__stage">'+cards.map(stkCard).join('')+'</div>'+
+    '</div>';
+  }
+
+  /* ---- the stack's own little physics ---------------------------------
+     Hand-rolled rather than pulled in as another plugin: it's one pointer
+     handler, and owning it means the threshold can care about velocity as
+     well as distance — a fast flick should commit even if it's short. */
+  function stackInit(root){
+    const stage=root.querySelector('.sk__stage');
+    if(!stage) return;
+    const cards=[].slice.call(stage.children);
+    if(!cards.length) return;
+    const ct=root.querySelector('.sk__ct b');
+    let order=cards.map((_,i)=>i), busyCard=false;
+
+    const G=M.g();
+    const put=(el,p,dur)=>{                      /* p = depth, 0 = front */
+      /* The cards behind are dimmed as well as offset. With an opaque front
+         card they only show as slivers at the bottom, and a sliver at full
+         brightness reads as a second card competing rather than as depth. */
+      const st={x:0,rotate:0,y:p*11,scale:1-p*.045,
+                opacity:p===0?1:p===1?.62:p===2?.34:0,
+                zIndex:100-p,
+                pointerEvents:p===0?'auto':'none'};
+      if(G&&dur) G.to(el,Object.assign({duration:dur,ease:'power3.out'},st));
+      else if(G) G.set(el,st);
+      else{ el.style.transform='translateY('+st.y+'px) scale('+st.scale+')';
+            el.style.opacity=st.opacity; el.style.zIndex=st.zIndex;
+            el.style.pointerEvents=st.pointerEvents; }
+      el.setAttribute('aria-hidden',p===0?'false':'true');
+    };
+    const paint=dur=>{
+      order.forEach((idx,p)=>put(cards[idx],p,dur));
+      if(ct) ct.textContent=(order[0]+1);
+    };
+    paint(0);
+
+    /* Send the front card away and bring the next one forward. Nothing is
+       ever lost: the swiped card goes to the BACK, so the stack loops. */
+    function advance(dir){
+      if(busyCard) return; busyCard=true;
+      const front=cards[order[0]];
+      const done=()=>{ order.push(order.shift()); paint(.42);
+                       setTimeout(()=>{busyCard=false;},120); };
+      if(!G){ done(); return; }
+      G.to(front,{x:dir*420,rotate:dir*16,opacity:0,duration:.34,ease:'power2.in',
+        onComplete:()=>{ G.set(front,{x:0,rotate:0,opacity:0}); done(); }});
+    }
+    let sx=0,st0=0,dx=0,drag=false,active=null;
+    stage.addEventListener('pointerdown',e=>{
+      if(busyCard) return;
+      if(e.target.closest('button')) return;      /* Add is not a drag */
+      active=cards[order[0]];
+      if(!active.contains(e.target)) return;
+      drag=true; sx=e.clientX; st0=Date.now(); dx=0;
+      try{ active.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    stage.addEventListener('pointermove',e=>{
+      if(!drag||!active) return;
+      dx=e.clientX-sx;
+      if(G) G.set(active,{x:dx,rotate:dx/22});
+      else active.style.transform='translate('+dx+'px) rotate('+(dx/22)+'deg)';
+      /* The next card rises to meet the gap as the front one leaves. */
+      const nxt=cards[order[1]];
+      if(nxt) put(nxt,Math.max(0,1-Math.min(1,Math.abs(dx)/140)),0);
+    });
+    const release=()=>{
+      if(!drag||!active) return;
+      drag=false;
+      const v=Math.abs(dx)/Math.max(1,Date.now()-st0);   /* px per ms */
+      /* Distance OR speed: a short fast flick is still a swipe. */
+      if(Math.abs(dx)>72||v>.45) advance(dx<0?-1:1);
+      else paint(.34);
+      active=null; dx=0;
+    };
+    stage.addEventListener('pointerup',release);
+    stage.addEventListener('pointercancel',release);
   }
 
   /* ---------------------------------------------------------- mood cards */
@@ -280,7 +388,6 @@ const UI=(function(){
   }
 
   function welcome(){
-    const c=Menu.captain();
     const el=document.createElement('div');
     el.className='wel';
     el.innerHTML=
@@ -290,19 +397,20 @@ const UI=(function(){
           '<em class="hi">Vanakkam!</em> <span class="wel__q">What are you craving?</span>'+
         '</div>'+
       '</div>'+
-      (c?heroCard(c):'')+
+      stackBlock()+
       moodRow('open');
     th.appendChild(el);
 
+    const sk=el.querySelector('.sk');
+    if(sk) stackInit(sk);
+
     const G=M.g();
     if(G){
-      const hero=el.querySelector('.hero');
       G.from(el.querySelector('.wel__hi'),{y:10,opacity:0,duration:.4,ease:'power3.out'});
-      if(hero) G.from(hero,{y:18,opacity:0,scale:.985,duration:.52,
-        ease:'power3.out',delay:.1,clearProps:'transform'});
+      if(sk) G.from(sk,{y:18,opacity:0,duration:.5,ease:'power3.out',delay:.08,
+        clearProps:'transform'});
       G.from(el.querySelectorAll('.mc'),
         {y:14,opacity:0,duration:.38,stagger:.05,ease:'power3.out',delay:.26,clearProps:'transform'});
-      M.aiEdge(hero);
     }
     /* No chip shelf here — the combo and the moods ARE the suggestions. */
     setChips([]);

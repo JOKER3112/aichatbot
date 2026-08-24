@@ -87,13 +87,6 @@ const M=(function(){
         G.to(b,{scale:p.s,  duration:p.ds,repeat:-1,yoyo:true,ease:'sine.inOut'});
       });
     },
-    /* The hero card's edge: a slow travelling highlight, not a pulse. */
-    aiEdge(el){
-      const G=g(); if(!G||!el) return;
-      const gl=el.querySelector('.hero__glow');
-      if(gl) G.fromTo(gl,{xPercent:-40},{xPercent:40,duration:6.5,
-        repeat:-1,yoyo:true,ease:'sine.inOut'});
-    },
     tap(el,to){const G=g();if(!G||!el)return;
       G.timeline().to(el,{scale:to||.96,duration:.08}).to(el,{scale:1,duration:.22,ease:'power3.out'});},
     pop(el){const G=g();if(!G||!el)return;

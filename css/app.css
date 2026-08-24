@@ -710,8 +710,9 @@ img{display:block;max-width:100%;}
 
    The rule that governs all of it: the AI gradient marks what the assistant
    produced, orange marks what you press, and they never appear on the same
-   element. The hero card is the clearest case — its edge and glow are the
-   AI's, its button is the brand's.
+   element. The recommendation stack is the clearest case — the AI mark sits
+   on the combo it assembled, the buttons are the brand's, and the cards
+   themselves are the same neutral surface as every other widget.
    ========================================================================== */
 .wel{padding:2px 0 8px;}
 .wel__hi{margin-bottom:2px;}
@@ -720,67 +721,107 @@ img{display:block;max-width:100%;}
 .wel .hi{font-style:normal;font-weight:600;color:var(--brand);}
 [data-theme='light'] .wel .hi{color:var(--brand-dark);}
 
-/* ------------------------------- hero combo ------------------------------ */
-.hero{position:relative;margin:12px var(--pad) 0;border-radius:22px;min-width:0;
-  overflow:hidden;isolation:isolate;
-  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
-             linear-gradient(135deg,var(--ai-a),var(--ai-b) 62%,transparent) border-box;
-  border:1px solid transparent;box-shadow:var(--ai-glow);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
-[data-theme='light'] .hero{
-  background:var(--card);border:1px solid rgba(123,110,255,.20);
-  box-shadow:var(--sh-2);backdrop-filter:none;-webkit-backdrop-filter:none;}
-/* A single travelling highlight, six seconds a pass. Slow enough that you
-   notice it only if you stop to look, which is the point. */
-.hero__glow{position:absolute;inset:-40% -30%;z-index:0;pointer-events:none;
-  background:radial-gradient(closest-side circle at 50% 50%,
-    rgba(155,123,255,.11),transparent 70%);filter:blur(34px);}
-[data-theme='light'] .hero__glow{background:radial-gradient(closest-side circle at 50% 50%,
-    rgba(123,110,255,.13),transparent 70%);}
+/* ==================== THE RECOMMENDATION STACK ==========================
+   This replaced a single tall hero card. On a real phone that card ate most
+   of the first screen, which pushed the moods and the composer below the
+   fold — the opposite of getting you to the food quickly.
 
-/* The kicker reads neutral; only the spark carries the AI colour. A whole
-   line of lavender caps was competing with the card's own edge for the same
-   job — saying "the assistant made this". */
-.hero__k{position:relative;z-index:1;display:flex;align-items:center;gap:6px;
-  padding:12px 14px 0;font-size:10.5px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--text-3);}
-.hero__k svg{width:13px;height:13px;flex:0 0 13px;fill:var(--ai-2);}
-[data-theme='light'] .hero__k svg{fill:#6B54D6;}
+   A stack is the same height whether it holds two cards or six, and the
+   edges peeking out underneath say "there's more here" in a way a carousel
+   with one neighbour half-visible never quite manages.
 
-.hero__tap{position:relative;z-index:1;display:flex;gap:12px;width:100%;
-  padding:11px 14px 0;text-align:left;min-width:0;}
-.hero__im{flex:0 0 96px;width:96px;height:96px;border-radius:16px;overflow:hidden;
-  background:var(--glass-2);}
-.hero__im img{width:100%;height:100%;object-fit:cover;}
-.hero__b{flex:1;min-width:0;display:block;}
-.hero__n{display:block;font-size:18px;font-weight:600;letter-spacing:-.02em;
-  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* The three dishes, with the plus signs doing the work a comma can't. */
-.hero__l{display:block;margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--text-2);}
-.hero__l i{font-style:normal;color:var(--text-3);padding:0 4px;}
-.hero__m{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;
-  font-size:11.5px;color:var(--text-3);min-width:0;}
-.hero__m .st{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text);}
-.hero__m .st svg{width:11px;height:11px;fill:var(--star);}
-/* (The green "save ₹25" pill lived here. Removed: the struck-through price
-   in the footer already says exactly that, and it was the only teal on the
-   screen.) */
-/* The reason. Small on purpose — it should read as a note the assistant
-   made, not as marketing copy. */
-.hero__w{display:block;margin-top:8px;font-size:12.5px;line-height:1.4;
-  color:var(--text-2);}
+   The cards are stacked with transforms, not with layout: the stage has a
+   fixed height and every card is absolutely positioned in it, so reordering
+   is a transform change and nothing reflows.
+   ======================================================================== */
+.sk{margin:14px 0 0;min-width:0;}
+.sk__h{display:flex;align-items:center;gap:6px;padding:0 var(--pad) 10px;
+  font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-3);}
+.sk__h svg{width:13px;height:13px;flex:0 0 13px;fill:var(--ai-2);}
+[data-theme='light'] .sk__h svg{fill:#6B54D6;}
+.sk__ct{margin-left:auto;letter-spacing:.04em;font-variant-numeric:tabular-nums;}
+.sk__ct b{color:var(--text-2);}
 
-.hero__f{position:relative;z-index:1;display:flex;align-items:center;gap:10px;
-  padding:13px 14px 14px;min-width:0;}
-.hero__p{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;}
-.hero__p .pr{font-size:20px;font-weight:600;letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;}
-.hero__p s{font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums;}
-.hero__f .b{margin-left:auto;min-height:42px;padding:0 16px;font-size:14px;}
+/* The stage carries the height for the whole stack, including the 18px the
+   two cards behind it stick out by. */
+/* The stage carries the height for the whole stack, including the strip the
+   cards behind stick out by. */
+/* Every number below is derived from the content, not chosen. The body
+   needs 136px for its five rows, the image gets 124, and the stage adds the
+   22px the two cards behind stick out by. Sized by eye it was 19px short,
+   which `overflow:hidden` turned into text sliced off mid-line. */
+.sk__stage{position:relative;height:282px;margin-inline:var(--pad);min-width:0;}
+
+/* OPAQUE. This is the whole reason the stack looked broken: the card was
+   using the shared widget fill, which is rgba(...,.84) — fine for a widget
+   sitting alone on the background, fatal for cards stacked on top of each
+   other. The one behind read straight through the one in front, so you got
+   two dish names and two prices overlapping in the same box.
+
+   A stack has to be solid. --card is the same colour the translucent fill
+   resolves to over the page, so nothing looks different — it just stops
+   being see-through. */
+.sk__c{position:absolute;inset:0 0 auto;height:260px;
+  border-radius:20px;overflow:hidden;min-width:0;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  box-shadow:0 10px 30px -8px rgba(0,0,0,.55);
+  transform-origin:50% 100%;will-change:transform;
+  touch-action:pan-y;                 /* the page still scrolls vertically */
+  -webkit-user-select:none;user-select:none;cursor:grab;}
+.sk__c:active{cursor:grabbing;}
+[data-theme='light'] .sk__c{border-color:transparent;
+  box-shadow:0 10px 28px -10px rgba(58,38,14,.34),0 1px 2px rgba(58,38,14,.06);}
+
+.sk__im{position:relative;height:124px;overflow:hidden;background:var(--glass-2);}
+.sk__im img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+/* Just enough scrim at the top for a badge to sit on any photograph. */
+.sk__im::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,transparent 38%);}
+.sk__tags{position:absolute;top:9px;left:9px;right:9px;display:flex;gap:5px;z-index:2;}
+.sk__tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;
+  border-radius:var(--r-pill);font-size:11px;font-weight:500;
+  background:rgba(8,9,11,.62);color:#fff;border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  white-space:nowrap;overflow:hidden;}
+.sk__tag svg{width:11px;height:11px;flex:0 0 11px;fill:currentColor;}
+/* The combo keeps the AI mark, since it is the one thing here the assistant
+   assembled rather than picked. */
+.sk__tag--ai{background:rgba(255,255,255,.94);color:#5B3FBE;border-color:transparent;}
+
+.sk__b{padding:12px 14px 12px;min-width:0;
+  display:flex;flex-direction:column;height:calc(100% - 124px);}
+.sk__n{margin:0;font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sk__m{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;margin-top:5px;
+  font-size:11.5px;color:var(--text-3);min-width:0;overflow:hidden;}
+.sk__m .st{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text);
+  flex:0 0 auto;}
+.sk__m .st svg{width:11px;height:11px;fill:var(--star);}
+.sk__m .dt{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;}
+.sk__m>span:not(.st):not(.dt):not(.dot){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* One line. Two lines of description is the difference between a card you
+   scan and a card you read, and this one is meant to be swiped. */
+.sk__d{margin:6px 0 0;font-size:12.5px;line-height:1.4;color:var(--text-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sk__f{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:9px;min-width:0;}
+.sk__p{flex:0 0 auto;display:flex;align-items:baseline;gap:6px;
+  font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+.sk__p s{font-size:12px;font-weight:400;color:var(--text-3);}
+.sk__f .b{margin-left:auto;min-height:38px;}
+
+/* No "swipe to see the rest" line. Two card edges peeking out from under
+   the front one already say it, the 1/5 counter confirms it, and that line
+   was 26px of the height budget on the smallest phone we target. */
+
+@media (prefers-reduced-motion:reduce){
+  .sk__c{transition:none!important;}
+}
 
 /* --------------------------------- moods -------------------------------- */
-.mood{margin-top:20px;min-width:0;}
-.mood__h{padding:0 var(--pad);margin-bottom:10px;
+.mood{margin-top:16px;min-width:0;}
+.mood__h{padding:0 var(--pad);margin-bottom:8px;
   font-size:13.5px;font-weight:500;color:var(--text-2);}
 /* Two up, and the row scrolls — four visible at once is the most you can
    weigh without it turning back into a list of filters. */
@@ -801,7 +842,7 @@ img{display:block;max-width:100%;}
    was ever doing the work. The gradient is white at 4% — light, not colour,
    so it reads as a raised glass tile rather than a swatch. */
 .mc{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
-  gap:7px;min-height:84px;padding:12px;border-radius:16px;overflow:hidden;
+  gap:7px;min-height:76px;padding:11px 12px;border-radius:16px;overflow:hidden;
   text-align:left;min-width:0;
   background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 62%),
              var(--card);
@@ -1203,8 +1244,8 @@ img{display:block;max-width:100%;}
    The lavender gradient edge is gone from here. It was the AI's colour on
    every widget, plus an orange edge on whichever one was waiting, so a
    thread with three widgets in it had two accent strokes and a neutral one
-   all at once. The AI gradient now appears on exactly one thing, the hero
-   card on the opening screen, where it means something.
+   all at once. The AI gradient now appears on two things only — the
+   composer on focus, and the badge on the combo the assistant assembled.
 
    State is a brighter stroke and opacity. Never a different colour, never a
    different fill.

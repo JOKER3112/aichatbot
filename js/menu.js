@@ -34,6 +34,18 @@ const Menu = {
       n_items:lines.reduce((t,l)=>t+l.q,0),
       r:Math.round(r*10)/10, hero});
   },
+  /* What the captain puts in the stack on the opening screen: the combo
+     first, then a spread of dishes rather than five variations of one idea.
+     Sorted by rating, then filtered so no two share a category — a stack of
+     three dosas is not a recommendation, it's a category page. */
+  picks(n){
+    const out=[], seen={};
+    ITEMS.filter(i=>!i.out).sort((a,b)=>(b.best-a.best)||(b.r-a.r))
+      .forEach(i=>{ if(out.length>=(n||4)) return;
+        if(seen[i.c]) return; seen[i.c]=1; out.push(i); });
+    return out;
+  },
+
   /* The opening screen's hero. First entry that resolves, so a dish going
      off the menu demotes its combo instead of showing a broken card. */
   captain(){
