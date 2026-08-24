@@ -139,7 +139,7 @@ img{display:block;max-width:100%;}
    Thinking raises the opacity and starts the drift.
    ======================================================================== */
 .amb{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
-  opacity:.72;transition:opacity .6s ease;
+  opacity:.34;transition:opacity .6s ease;
   filter:blur(58px);
   -webkit-mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);
   mask:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,.55) 100%);}
@@ -255,7 +255,7 @@ img{display:block;max-width:100%;}
    put a second orange block on every screen that already had an orange
    button. The edge says "this is yours" without shouting it. */
 .bub--u{background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
-        linear-gradient(215deg,var(--ai-b) 0%,var(--ai-a) 100%) border-box;
+        linear-gradient(215deg,var(--you-b) 0%,var(--you-a) 100%) border-box;
   border:1px solid transparent;color:var(--text);font-weight:500;
   border-radius:18px;border-top-right-radius:6px;
   box-shadow:var(--ai-glow);
@@ -272,12 +272,14 @@ img{display:block;max-width:100%;}
    the thread, scroll with it, and collapse to a one-line summary once done
    so the log stays readable.
    ======================================================================== */
-.w{margin-inline:var(--lane) var(--pad);border-radius:var(--r-md);background:var(--card);
-  border:1px solid var(--line);overflow:hidden;min-width:0;}
-/* Only the widget actually waiting on you wears the accent. A resolved one
-   drops back to neutral so the eye lands on the single live thing. */
-.w--hot{border-color:rgba(243,106,32,.38);}
-.w.done{border-color:var(--line-soft)!important;background:var(--card-2);}
+.w{margin-inline:var(--lane) var(--pad);border-radius:var(--r-md);
+  overflow:hidden;min-width:0;}
+/* Fill and edge come from the shared widget rule near the bottom of the
+   file — every widget surface in the app is declared in exactly one place.
+   What varies here is state, and state changes the EDGE, never the fill. */
+/* Waiting on you: the same stroke, brighter. Focus mode already dims
+   everything else, which says "this one" far louder than an edge can. */
+.w--hot{border-color:var(--line)!important;}
 .w.done .w__d .go{color:var(--text-2);}
 .w__h{display:flex;align-items:center;gap:8px;padding:12px 14px 0;min-width:0;}
 .w__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
@@ -291,7 +293,9 @@ img{display:block;max-width:100%;}
 .w__d{display:none;align-items:center;gap:8px;padding:12px 14px;font-size:13px;min-width:0;}
 .w.done .w__h,.w.done .w__b,.w.done .w__f{display:none;}
 .w.done .w__d{display:flex;}
-.w.done{border-color:var(--line-soft);}
+/* Resolved: same surface, quieter contents. It used to swap to a different
+   fill, which made a finished step look like a different kind of object. */
+.w.done{opacity:.78;}
 .w__d svg{width:15px;height:15px;color:var(--veg);flex:0 0 15px;}
 .w__d .k{color:var(--text-2);flex:0 0 auto;}
 .w__d b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -457,8 +461,10 @@ img{display:block;max-width:100%;}
    Tight to the message above (-2px) and generous below, so they group with
    the reply rather than floating between two of them. */
 .sug{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;min-width:0;
-  margin-top:-2px;padding:0 var(--pad) 4px var(--lane);
+  margin-top:-2px;padding:0 0 4px;scroll-padding-left:var(--lane);
   -webkit-overflow-scrolling:touch;}
+.sug>*:first-child{margin-left:var(--lane);}
+.sug>*:last-child{margin-right:var(--pad);}
 .sug::-webkit-scrollbar{display:none;}
 .sug .chip{min-height:34px;padding:0 13px;font-size:12.5px;}
 /* Focus mode still parks them, it just parks them where they now live. */
@@ -466,12 +472,29 @@ img{display:block;max-width:100%;}
   pointer-events:none;overflow:hidden;}
 .sug{transition:opacity .22s,transform .22s,max-height .24s;max-height:52px;}
 
-/* --------------------------------- rails --------------------------------- */
+/* --------------------------------- rails ---------------------------------
+   The inset is on the ITEMS, not on the container, and that is the whole
+   fix for the carousel starting flush at 0 while the text beside it sat at
+   --lane.
+
+   `scroll-snap-type: x mandatory` means the browser snaps on layout. It
+   snaps the first child's start edge to the start of the SCROLLPORT — and
+   the scrollport starts at the border edge, not the padding edge, unless
+   scroll-padding says otherwise. So the container's padding-left was being
+   scrolled out of view before anyone touched the rail, every time.
+
+   A margin on the first item is part of that item's own box, so snapping to
+   it preserves the gap. scroll-padding-left tells the snap algorithm the
+   same thing, so a later snap can't undo it either.
+   -------------------------------------------------------------------------- */
 .rail{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
-  padding:2px var(--pad) 8px var(--lane);min-width:0;}
+  padding:2px 0 8px;min-width:0;
+  scroll-padding-left:var(--lane);}
 .rail::-webkit-scrollbar{display:none;}
 .rail>*{scroll-snap-align:start;flex:0 0 auto;}
+.rail>*:first-child{margin-left:var(--lane);}
+.rail>*:last-child{margin-right:var(--pad);}
 
 /* --------------------------------------------------------------------------
    DISH CARD — rebuilt on the reference layout.
@@ -625,29 +648,50 @@ img{display:block;max-width:100%;}
 [data-theme='light'] .ntt--on svg{color:var(--brand-dark);}
 .ntt--on .ntt__t{color:var(--text);}
 
-/* ------------------------------ note popover ------------------------------
-   The native popover API, so this lands in the top layer. That matters:
-   the order widget is overflow:hidden and inside a scrolling thread, so an
-   absolutely-positioned panel would be clipped by its own card. Esc and
-   click-outside come free with it.
-   -------------------------------------------------------------------------- */
-.ntp{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));
-  transform:translateX(-50%);
-  width:calc(min(100vw,400px) - var(--pad) * 2);max-width:100%;
-  margin:0;padding:0;border:0;z-index:80;
-  background:var(--card);border-radius:var(--r-lg);
-  box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;}
-[data-theme='light'] .ntp{box-shadow:0 18px 50px -8px rgba(58,38,14,.28),
-  0 2px 6px rgba(58,38,14,.08);}
-/* Native popovers are display:none until shown; the fallback mirrors that. */
-.ntp:not(:popover-open):not(.on){display:none;}
-.ntp::backdrop{background:rgba(0,0,0,.5);}
-.ntp__b{padding:4px 14px 0;max-height:56dvh;overflow-y:auto;scrollbar-width:none;}
-.ntp__b::-webkit-scrollbar{display:none;}
-/* Inside the popover the block is the whole content, so it needs no rule
-   above it separating it from anything. */
-.ntp__b .nt{margin-top:0;padding-top:14px;border-top:0;}
-.ntp__f{padding:12px 14px 14px;}
+/* ============================ BOTTOM SHEET ==============================
+   One sheet, two callers: the kitchen note and the combo peek.
+
+   The note used to be a popover in the order card and eight open chips in
+   the details form — two surfaces for one feature, which is why it never
+   felt like the same thing twice. Both routes now open this, from the same
+   button, with the same contents.
+
+   This is the exception to "everything happens in the chat", and a narrow
+   one: a short detour you finish and dismiss. Every step of the ORDER —
+   options, review, details, confirmation, tracking — is still a widget in
+   the conversation.
+   ======================================================================== */
+.shScrim{position:fixed;inset:0;z-index:88;background:rgba(0,0,0,.55);
+  opacity:0;visibility:hidden;transition:opacity .26s ease,visibility .26s;
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+.shScrim.on{opacity:1;visibility:visible;}
+
+.sh{position:fixed;left:50%;bottom:0;z-index:90;
+  width:min(100vw,400px);max-width:100%;transform:translateX(-50%);
+  display:flex;flex-direction:column;max-height:min(84dvh,720px);
+  background:var(--card);color:var(--text);
+  border-radius:24px 24px 0 0;border-top:1px solid var(--line-soft);
+  box-shadow:0 -20px 60px rgba(0,0,0,.5);padding-bottom:var(--safe-b);}
+[data-theme='light'] .sh{box-shadow:0 -18px 50px -8px rgba(58,38,14,.26);}
+.sh[hidden]{display:none;}
+
+/* The grab handle IS the close button — the affordance and the control are
+   one object, so it works by tap as well as by looking draggable. */
+.sh__grab{display:block;width:100%;padding:10px 0 4px;flex:0 0 auto;}
+.sh__grab i{display:block;width:38px;height:4px;margin:0 auto;border-radius:99px;
+  background:var(--line-strong);opacity:.5;}
+.sh__h{display:flex;align-items:center;gap:10px;padding:4px 16px 10px;flex:0 0 auto;min-width:0;}
+.sh__h h4{margin:0;flex:1;min-width:0;font-size:16px;font-weight:600;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sh__x{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;
+  color:var(--text-3);background:var(--glass);}
+.sh__x svg{width:15px;height:15px;}
+.sh__b{flex:1 1 auto;overflow-y:auto;padding:0 16px;scrollbar-width:none;
+  overscroll-behavior:contain;}
+.sh__b::-webkit-scrollbar{display:none;}
+.sh__f{flex:0 0 auto;padding:12px 16px 14px;}
+.sh__f:empty{display:none;}
+.sh__b .nt{margin-top:0;padding-top:2px;border-top:0;}
 
 /* The note read back. It matters that this looks like a quote of what you
    asked for rather than another field — you're checking it, not editing it. */
@@ -690,15 +734,18 @@ img{display:block;max-width:100%;}
    notice it only if you stop to look, which is the point. */
 .hero__glow{position:absolute;inset:-40% -30%;z-index:0;pointer-events:none;
   background:radial-gradient(closest-side circle at 50% 50%,
-    rgba(155,123,255,.16),transparent 70%);filter:blur(34px);}
+    rgba(155,123,255,.11),transparent 70%);filter:blur(34px);}
 [data-theme='light'] .hero__glow{background:radial-gradient(closest-side circle at 50% 50%,
     rgba(123,110,255,.13),transparent 70%);}
 
+/* The kicker reads neutral; only the spark carries the AI colour. A whole
+   line of lavender caps was competing with the card's own edge for the same
+   job — saying "the assistant made this". */
 .hero__k{position:relative;z-index:1;display:flex;align-items:center;gap:6px;
   padding:12px 14px 0;font-size:10.5px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--ai-2);}
-[data-theme='light'] .hero__k{color:#6B54D6;}
-.hero__k svg{width:13px;height:13px;flex:0 0 13px;fill:currentColor;}
+  text-transform:uppercase;color:var(--text-3);}
+.hero__k svg{width:13px;height:13px;flex:0 0 13px;fill:var(--ai-2);}
+[data-theme='light'] .hero__k svg{fill:#6B54D6;}
 
 .hero__tap{position:relative;z-index:1;display:flex;gap:12px;width:100%;
   padding:11px 14px 0;text-align:left;min-width:0;}
@@ -715,7 +762,9 @@ img{display:block;max-width:100%;}
   font-size:11.5px;color:var(--text-3);min-width:0;}
 .hero__m .st{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text);}
 .hero__m .st svg{width:11px;height:11px;fill:var(--star);}
-.hero__sv{color:var(--veg);font-weight:600;}
+/* (The green "save ₹25" pill lived here. Removed: the struck-through price
+   in the footer already says exactly that, and it was the only teal on the
+   screen.) */
 /* The reason. Small on purpose — it should read as a note the assistant
    made, not as marketing copy. */
 .hero__w{display:block;margin-top:8px;font-size:12.5px;line-height:1.4;
@@ -735,43 +784,44 @@ img{display:block;max-width:100%;}
   font-size:13.5px;font-weight:500;color:var(--text-2);}
 /* Two up, and the row scrolls — four visible at once is the most you can
    weigh without it turning back into a list of filters. */
-.mood__g{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
-  grid-template-rows:repeat(2,auto);gap:9px;
-  padding:2px var(--pad) 4px;overflow-x:auto;scrollbar-width:none;
+.mood__g{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:9px;
+  padding:2px 0 4px;overflow-x:auto;scrollbar-width:none;
+  scroll-padding-left:var(--lane);
   grid-auto-columns:calc((100% - var(--pad)*2 - 9px)/2);}
+.mood__g>*:nth-child(-n+2){margin-left:var(--lane);}
+.mood__g>*:nth-last-child(-n+2){margin-right:var(--pad);}
 .mood__g::-webkit-scrollbar{display:none;}
 
+/* These were six cards with six different coloured washes — orange, green,
+   amber, pink, brown, blue — which by itself put five hue families on the
+   opening screen. And it was saying the same thing twice: the emoji already
+   tells you which mood it is, far more precisely than a tint can.
+
+   So they're one neutral surface now, differentiated by the only thing that
+   was ever doing the work. The gradient is white at 4% — light, not colour,
+   so it reads as a raised glass tile rather than a swatch. */
 .mc{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
   gap:7px;min-height:84px;padding:12px;border-radius:16px;overflow:hidden;
   text-align:left;min-width:0;
-  background:var(--card);border:1px solid var(--line-soft);
-  transition:border-color .18s,transform .18s;}
-/* The wash is the only thing that differs between them, and it's kept low
-   enough that the label never fights it. */
-.mc::before{content:'';position:absolute;inset:0;z-index:0;opacity:.5;
-  background:radial-gradient(120% 90% at 82% 12%,var(--mc),transparent 68%);}
-.mc--sp{--mc:rgba(226,88,44,.55);}
-.mc--lt{--mc:rgba(79,193,124,.42);}
-.mc--fl{--mc:rgba(214,138,42,.48);}
-.mc--sw{--mc:rgba(214,104,158,.42);}
-.mc--sn{--mc:rgba(150,116,80,.45);}
-.mc--tw{--mc:rgba(91,140,255,.40);}
-.mc--dr{--mc:rgba(72,168,196,.42);}
-.mc--bs{--mc:rgba(155,123,255,.42);}
-.mc--rv{--mc:rgba(120,124,136,.40);}
-[data-theme='light'] .mc{box-shadow:var(--sh-1);}
-[data-theme='light'] .mc::before{opacity:.34;}
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 62%),
+             var(--card);
+  border:1px solid var(--line-soft);
+  transition:border-color .18s,background .18s;}
+.mc:active{border-color:var(--line);}
+[data-theme='light'] .mc{
+  background:linear-gradient(160deg,rgba(28,20,12,.035),rgba(28,20,12,.008) 62%),
+             var(--card);
+  box-shadow:var(--sh-1);}
+
 .mc__i{position:relative;z-index:1;font-size:20px;line-height:1;}
 .mc__t{position:relative;z-index:1;font-size:13px;font-weight:500;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;}
 
 /* ------------------------------ combo peek ------------------------------ */
 .peek{padding:14px 0 4px;min-width:0;}
-.peek__h{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--ai-2);}
-[data-theme='light'] .peek__h{color:#6B54D6;}
-.peek__h svg{width:13px;height:13px;fill:currentColor;}
-.peek__n{margin:7px 0 12px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
+/* (.peek__h removed — the sheet has a real header now, so the card no
+   longer carries its own kicker.) */
+.peek__n{margin:2px 0 12px;font-size:19px;font-weight:600;letter-spacing:-.02em;}
 .peek__l{border-radius:12px;background:var(--glass);padding:4px 10px;min-width:0;}
 .peek__i{display:flex;align-items:center;gap:10px;padding:8px 0;min-width:0;}
 .peek__i+.peek__i{box-shadow:inset 0 1px 0 var(--line-soft);}
@@ -801,8 +851,7 @@ img{display:block;max-width:100%;}
    -------------------------------------------------------------------------- */
 .cbs{display:flex;flex-direction:column;gap:10px;min-width:0;}
 .cb{margin-inline:var(--lane) var(--pad);padding:13px 14px 14px;border-radius:var(--r-md);
-  background:var(--card);border:1px solid var(--line);min-width:0;overflow:hidden;}
-[data-theme='light'] .cb{border-color:transparent;box-shadow:var(--sh-2);}
+  min-width:0;overflow:hidden;}
 
 .cb__h{display:flex;align-items:center;gap:8px;min-width:0;}
 .cb__k{flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
@@ -882,15 +931,38 @@ img{display:block;max-width:100%;}
 /* --------------------------------- tracking ------------------------------ */
 .ts{display:flex;gap:12px;min-width:0;}
 .ts__r{display:flex;flex-direction:column;align-items:center;flex:0 0 20px;}
-.td{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);
-  display:grid;place-items:center;flex:0 0 20px;background:var(--card);}
-.td svg{width:11px;height:11px;color:#fff;opacity:0;stroke-width:2.4;}
-.tl{width:2px;flex:1;min-height:20px;background:var(--line-soft);}
+/* THE GLITCH, and it was layout rather than paint.
+
+   .td is a 20px grid with place-items:center. The tick lived inside it at
+   opacity:0 — still present, still taking a grid ROW. The in-progress dot
+   is a ::after, which grid put in a SECOND row. 11px + 6px of content in a
+   16px content box: the two rows overflowed, so the dot sat low and clipped
+   instead of centred.
+
+   The tick is display:none unless the step is done, so the dot is the only
+   thing in the cell and centres properly. It is also positioned absolutely
+   now, which means neither element can ever push the other again. */
+.td{position:relative;width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line-strong);
+  display:grid;place-items:center;flex:0 0 20px;background:transparent;}
+.td svg{display:none;width:11px;height:11px;color:#fff;stroke-width:2.4;}
+
+/* The connector was --line-soft: 6% white, 2px wide. Between two done steps
+   it was green and visible; after the live step it vanished, so the timeline
+   looked like it stopped dead at "Happening now". */
+.tl{width:2px;flex:1;min-height:20px;background:var(--line);border-radius:2px;}
+
 .ts--d .td{background:var(--veg-deep);border-color:var(--veg-deep);}
-.ts--d .td svg{opacity:1;}
+.ts--d .td svg{display:block;}
 .ts--d .tl{background:var(--veg-deep);}
+
 .ts--a .td{border-color:var(--brand);background:var(--brand);}
-.ts--a .td::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-ink);}
+.ts--a .td::after{content:'';position:absolute;top:50%;left:50%;
+  width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;
+  background:var(--brand-ink);}
+/* The line leaving the live step fades from the front of progress into the
+   part that hasn't happened yet. */
+.ts--a .tl{background:linear-gradient(180deg,var(--brand),var(--line) 70%);}
 .ts__b{padding-bottom:14px;min-width:0;}
 .ts__n{font-size:13px;font-weight:500;}
 .ts--p .ts__n{color:var(--text-3);font-weight:400;}
@@ -1111,17 +1183,36 @@ img{display:block;max-width:100%;}
   --ai-b:rgba(192,132,245,.32);
   --ai-glow:0 1px 26px rgba(123,110,255,.10);
   --ai-fill:rgba(22,23,27,.84);
+
+  /* The edge on YOUR message. Its own tokens, not the AI's — you asked for
+     a warm stroke there, and when the AI gradient went cool your message
+     quietly went cool with it. Two different speakers, two identities that
+     move independently. */
+  --you-a:rgba(255,255,255,.16);
+  --you-b:rgba(243,106,32,.30);
 }
 /* Light deliberately defines no --ai-* of its own. Every consumer of those
    tokens — the gradient edge, the glow, the translucent fill — is overridden
    further down for light, so a light copy of them would be dead weight that
    still reads as orange to anyone auditing the file. */
-.w{
-  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
-             linear-gradient(135deg,var(--ai-a) 0%,var(--ai-b) 100%) border-box;
-  border:1px solid transparent;
+/* ========================== THE WIDGET SURFACE ==========================
+   Every panel the assistant puts in the thread — options, add-on
+   suggestions, order review, your details, confirm, receipt, tracking, the
+   combo card — is this one surface, with ONE stroke.
+
+   The lavender gradient edge is gone from here. It was the AI's colour on
+   every widget, plus an orange edge on whichever one was waiting, so a
+   thread with three widgets in it had two accent strokes and a neutral one
+   all at once. The AI gradient now appears on exactly one thing, the hero
+   card on the opening screen, where it means something.
+
+   State is a brighter stroke and opacity. Never a different colour, never a
+   different fill.
+   ======================================================================== */
+.w,.cb{
+  background:var(--ai-fill);
+  border:1px solid var(--line-soft);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:var(--ai-glow);
 }
 /* ==========================================================================
    LIGHT THEME — surface, not stroke.
@@ -1140,15 +1231,15 @@ img{display:block;max-width:100%;}
    Orange is now the button you're meant to press, and nothing else.
    Selections resolve to near-black: unambiguous, and it costs no accent.
    ========================================================================== */
-[data-theme='light'] .w{
+[data-theme='light'] .w,[data-theme='light'] .cb{
   background:var(--card);border:1px solid transparent;box-shadow:var(--sh-2);
   backdrop-filter:none;-webkit-backdrop-filter:none;
 }
+[data-theme='light'] .w--hot{border-color:transparent!important;}
 /* The one waiting on you gets lifted and warmed rather than outlined. */
-[data-theme='light'] .w--hot{
-  background:#FFFDFB;border-color:transparent;box-shadow:var(--sh-3);}
-[data-theme='light'] .w.done{
-  background:var(--card-2);border-color:transparent!important;box-shadow:var(--sh-1);}
+/* Same fill as every other widget; state shows as lift and as opacity. */
+[data-theme='light'] .w--hot{box-shadow:var(--sh-3);}
+[data-theme='light'] .w.done{box-shadow:var(--sh-1);}
 [data-theme='light'] .fc{border-color:transparent;box-shadow:var(--sh-2);}
 
 /* Selected states. */
@@ -1181,9 +1272,8 @@ img{display:block;max-width:100%;}
 [data-theme='light'] .tag--ai{
   background:rgba(255,255,255,.93);color:#BC4708;border-color:rgba(255,255,255,.7);}
 
-.w--hot{box-shadow:0 0 26px rgba(243,106,32,.12);
-  background:linear-gradient(var(--ai-fill),var(--ai-fill)) padding-box,
-             linear-gradient(135deg,rgba(243,106,32,.62),rgba(243,106,32,.22)) border-box;}
+/* No halo either — it was the orange edge by another name. */
+.w--hot{box-shadow:none;}
 
 /* ==========================================================================
    THINKING — third pass. No box, no skeleton, a mesh gradient instead.

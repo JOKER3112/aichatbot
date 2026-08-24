@@ -354,7 +354,11 @@ window.MI=MI;
 
    Three sets, because the right question changes: before you've told me
    anything, after you've told me a mood, and after something's in the cart.
-   Four visible at a time; the rest scroll. */
+   Four visible at a time; the rest scroll.
+
+   Fourth field is the mood's stable key — it lands on the button as data-k.
+   It styles nothing (every card wears the same neutral surface); it's there
+   so a mood can be identified without matching on its label. */
 const MOODS={
   open:[
     ['\ud83c\udf36\ufe0f','Craving spicy',      'Something spicy',        'sp'],

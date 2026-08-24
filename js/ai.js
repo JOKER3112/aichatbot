@@ -14,7 +14,10 @@ const AI=(function(){
     light:['light','small','snack','quick bite','tiffin'],
     fill:['filling','heavy','hungry','full meal','starving','meals'],
     cart:['cart','my order','view order','basket','review order','show order','order summary'],
-    pay:['checkout','check out','place order','pay','proceed','confirm order','place it'],
+    /* No 'pay' here on purpose — the app doesn't take payment. These all
+       mean "send it to the kitchen". */
+    pay:['checkout','check out','place order','send it','send to kitchen',
+         'proceed','confirm order','place it','done','that\u2019s all','thats all'],
     track:['track','where is','how long','eta','status','when will'],
     pop:['bestseller','bestsellers','best seller','most popular','popular','most ordered',
          "what's good",'whats good','special today',"what's special",'whats special'],
@@ -254,7 +257,7 @@ const AI=(function(){
   function next(A){
     const m=Cart.missing();
     if(!m.length){
-      A.push({t:'say',h:'All set. Have a look before I send it.'});
+      A.push({t:'say',h:'All set. Have a look before I send it to the kitchen.'});
       A.push({t:'sheet',v:'pay'});
       return A;
     }

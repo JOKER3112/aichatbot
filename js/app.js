@@ -5,7 +5,7 @@
 
 const UI=(function(){
   let th,cp,inp,snd,cartBtn,pill,mark,tst;
-  let bottom=true,busy=false,payM='upi',cat='All',sug={},tapped=null,lastSug=null,focused=null;
+  let bottom=true,busy=false,cat='All',sug={},tapped=null,lastSug=null,focused=null;
   const drafts={};                 // widget id -> working config
   const now=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const $=s=>document.querySelector(s);
@@ -51,8 +51,12 @@ const UI=(function(){
       document.getElementById('isl').classList.contains('on')?islandClose():islandOpen();
     });
     document.getElementById('islScrim').addEventListener('click',islandClose);
+    document.getElementById('shScrim').addEventListener('click',sheetClose);
+    document.getElementById('shGrab').addEventListener('click',sheetClose);
     document.addEventListener('keydown',e=>{
-      if(e.key==='Escape'&&document.getElementById('isl').classList.contains('on')) islandClose();
+      if(e.key!=='Escape') return;
+      if(!document.getElementById('sh').hidden){ sheetClose(); return; }
+      if(document.getElementById('isl').classList.contains('on')) islandClose();
     });
     syncTitle();
     welcome();
@@ -231,7 +235,6 @@ const UI=(function(){
           '<span class="hero__m">'+
             '<span class="st">'+IC.star+' '+c.r+'</span>'+
             '<span class="dot"></span><span>'+c.n_items+' items</span>'+
-            '<span class="dot"></span><span class="hero__sv">save '+R$(c.off)+'</span>'+
           '</span>'+
           '<span class="hero__w">'+esc(c.why)+'</span>'+
         '</span>'+
@@ -253,7 +256,9 @@ const UI=(function(){
         :moodSet==='mood'?'Want me to push it further?'
         :'Anything else with that?')+'</div>'+
       '<div class="mood__g">'+list.map(m=>
-        '<button class="mc mc--'+m[3]+'" data-a="mood" data-say="'+esc(m[2])+'">'+
+        /* No per-mood class: they all wear the same neutral surface now, and
+           a class that styles nothing is just something to trip over later. */
+        '<button class="mc" data-a="mood" data-say="'+esc(m[2])+'" data-k="'+m[3]+'">'+
           '<span class="mc__i" aria-hidden="true">'+m[0]+'</span>'+
           '<span class="mc__t">'+esc(m[1])+'</span></button>').join('')+
       '</div></div>';
@@ -663,15 +668,58 @@ const UI=(function(){
   /* The native popover API puts this in the top layer, so the order widget's
      own overflow:hidden can't clip it, and Esc plus click-outside come free.
      Where it isn't supported we fall back to a class and a scrim. */
-  /* A look inside the combo without leaving the screen. Deliberately the
-     same top-layer popover the kitchen note uses, not a bottom sheet — the
-     rule that everything happens in the chat still holds, and a sheet that
-     covers the conversation is the thing that rule exists to prevent. */
+  /* ====================================================================
+     THE SHEET
+
+     One surface, opened by name. Callers hand it a title, a body and a
+     footer; it owns showing, hiding, the scrim, Esc and the scroll lock.
+     Before this the note was a popover in one place and inline chips in
+     another, and the combo peek was a third variation of the same idea.
+     ==================================================================== */
+  let shBack=null;                      /* who to hand focus back to */
+  function sheetOpen(o){
+    const sh=document.getElementById('sh'), scrim=document.getElementById('shScrim');
+    document.getElementById('shTitle').textContent=o.title||'';
+    document.getElementById('shBody').innerHTML=o.body||'';
+    document.getElementById('shFoot').innerHTML=o.foot||'';
+    shBack=o.from||null;
+    if(shBack) shBack.setAttribute('aria-expanded','true');
+    sh.hidden=false;
+    requestAnimationFrame(()=>scrim.classList.add('on'));
+    const G=M.g();
+    if(G){
+      G.killTweensOf(sh);
+      G.fromTo(sh,{yPercent:100},{yPercent:0,duration:.42,ease:'power3.out'});
+      if(o.stagger) G.from(sh.querySelectorAll(o.stagger),
+        {y:10,opacity:0,duration:.28,stagger:.03,ease:'power2.out',delay:.1});
+    }
+    if(o.after) o.after(sh);
+  }
+  function sheetClose(){
+    const sh=document.getElementById('sh'), scrim=document.getElementById('shScrim');
+    if(sh.hidden) return;
+    scrim.classList.remove('on');
+    if(shBack){ shBack.setAttribute('aria-expanded','false'); shBack=null; }
+    const done=()=>{ sh.hidden=true; document.getElementById('shFoot').innerHTML=''; syncTriggers(); };
+    const G=M.g();
+    if(!G){ done(); return; }
+    G.to(sh,{yPercent:100,duration:.3,ease:'power2.in',onComplete:()=>{G.set(sh,{yPercent:0});done();}});
+  }
+
+  /* ------------------------------------------------------- the two callers */
+  function noteOpen(btn){
+    sheetOpen({
+      title:'Note for the kitchen',
+      from:btn||null,
+      body:notesBlock(),
+      foot:'<button class="b b--p b--bl" data-a="shclose">Done</button>',
+      stagger:'.nb',
+    });
+  }
   function comboPeek(c){
-    const pop=document.getElementById('ntpop');
-    document.getElementById('ntpopBody').innerHTML=
-      '<div class="peek">'+
-        '<div class="peek__h">'+IC.spark+'<span>'+esc(c.k)+'</span></div>'+
+    sheetOpen({
+      title:c.k,
+      body:'<div class="peek">'+
         '<h3 class="peek__n">'+esc(c.n)+'</h3>'+
         '<div class="peek__l">'+c.lines.map(l=>
           '<div class="peek__i"><img '+Menu.img(l.it)+'>'+
@@ -681,46 +729,11 @@ const UI=(function(){
           '<span class="peek__p">'+R$(l.sub)+'</span></div>').join('')+
         '</div>'+
         '<div class="peek__f"><span>Set price</span>'+
-          '<b>'+R$(c.now)+'</b><s>'+R$(c.was)+'</s></div>'+
-      '</div>';
-    document.querySelector('.ntp__f').innerHTML=
-      '<button class="b b--p b--bl" data-a="addcombo" data-id="'+c.id+'">'+
-        'Add combo \u00b7 '+R$(c.now)+'</button>';
-    noteFrom=null;
-    if(typeof pop.showPopover==='function'){ try{ pop.showPopover(); }catch(e){ pop.classList.add('on'); } }
-    else pop.classList.add('on');
-    const G=M.g();
-    if(G){
-      G.fromTo(pop,{y:14,opacity:0},{y:0,opacity:1,duration:.3,ease:'power3.out'});
-      G.from(pop.querySelectorAll('.peek__i'),{y:8,opacity:0,duration:.26,stagger:.04});
-    }
-  }
-
-  let noteFrom=null;
-  function noteOpen(btn){
-    const pop=document.getElementById('ntpop');
-    document.getElementById('ntpopBody').innerHTML=notesBlock();
-    /* The combo peek borrows this popover and swaps the footer for its own
-       Add button, so put Done back rather than inheriting whatever the last
-       caller left behind. */
-    document.querySelector('.ntp__f').innerHTML=
-      '<button class="b b--p b--bl" data-a="ntdone">Done</button>';
-    noteFrom=btn||null;
-    if(btn) btn.setAttribute('aria-expanded','true');
-    if(typeof pop.showPopover==='function'){ try{ pop.showPopover(); }catch(e){ pop.classList.add('on'); } }
-    else pop.classList.add('on');
-    const G=M.g();
-    if(G){
-      G.fromTo(pop,{y:14,opacity:0},{y:0,opacity:1,duration:.3,ease:'power3.out'});
-      G.from(pop.querySelectorAll('.nb'),{y:8,opacity:0,duration:.26,stagger:.022,ease:'power2.out'});
-    }
-  }
-  function noteClose(){
-    const pop=document.getElementById('ntpop');
-    if(typeof pop.hidePopover==='function'){ try{ pop.hidePopover(); }catch(e){} }
-    pop.classList.remove('on');
-    if(noteFrom){ noteFrom.setAttribute('aria-expanded','false'); noteFrom=null; }
-    syncTriggers();
+          '<b>'+R$(c.now)+'</b><s>'+R$(c.was)+'</s></div></div>',
+      foot:'<button class="b b--p b--bl" data-a="addcombo" data-id="'+c.id+'">'+
+        'Add combo \u00b7 '+R$(c.now)+'</button>',
+      stagger:'.peek__i',
+    });
   }
 
   /* Read whichever block the user touched, write the single string. */
@@ -763,7 +776,7 @@ const UI=(function(){
       return field('',' data-f="'+k+'"',
         '<input type="'+SPEC[k][1]+'" data-ff="'+k+'" value="'+esc(f[k]||'')+'" placeholder=" ">',
         SPEC[k][0]);
-    }).join('')+notesBlock();
+    }).join('')+notesTrigger();   /* same button, same sheet, both places */
 
     widget(id,{
       label:'Your details', hot:1, focus:1,
@@ -787,34 +800,33 @@ const UI=(function(){
     return n?'<div class="ntl">'+IC.spark+'<span><b>For the kitchen</b>'+esc(n)+'</span></div>':'';
   }
 
+  /* =================================================================== */
+  /* WIDGET · confirm                                                    */
+  /* =================================================================== */
+  /* This used to be "Confirm and pay", with UPI / Card / Cash and a
+     Pay ₹X button. The app doesn't take payment — the restaurant does —
+     so every one of those was a promise it couldn't keep. What's left is
+     the last look before it goes to the kitchen: what you ordered, where
+     it's going, the note, and the total you'll settle in person. */
   function wPay(){
-    const s=Cart.snap(), f=s.ful, id=uid('pay');
+    const s=Cart.snap(), f=s.ful, id=uid('cf');
     const m=R.modes.find(x=>x.id===f.mode);
-    const who=[f.name,f.phone,f.address].filter(Boolean).join(' · ');
+    const who=[f.name,f.phone,f.address].filter(Boolean).join(' \u00b7 ');
 
     const items=s.lines.map(l=>
-      '<div class="row"><span class="g">'+esc(l.it.n)+(l.q>1?' ×'+l.q:'')+'</span><b>'+R$(l.total)+'</b></div>').join('');
-
-    const methods=[['upi','UPI','GPay · PhonePe · Paytm'],
-                   ['card','Card','Visa ending 4218'],
-                   ['cod',f.mode==='dinein'?'Pay at the table':'Cash','Settle in person']]
-      .map(p=>'<button class="cr" aria-pressed="'+(payM===p[0])+'" data-a="wpm" data-w="'+id+'" data-m="'+p[0]+'">'+
-        '<span class="cr__b"><span class="cr__n">'+esc(p[1])+'</span><span class="cr__d">'+esc(p[2])+'</span></span>'+
-        '<span class="rd"></span></button>').join('');
+      '<div class="row"><span class="g">'+esc(l.it.n)+(l.q>1?' \u00d7'+l.q:'')+'</span><b>'+R$(l.total)+'</b></div>').join('');
 
     widget(id,{
-      label:'Confirm and pay', count:s.t.n+' item'+(s.t.n===1?'':'s'), hot:1,
+      label:'Confirm your order', count:s.t.n+' item'+(s.t.n===1?'':'s'), hot:1,
       body:
         (m?'<button class="cr" data-a="wmode" data-w="'+id+'" style="margin-bottom:14px">'+
           '<span class="cr__i">'+MI[m.id]+'</span><span class="cr__b">'+
           '<span class="cr__n">'+esc(m.label)+'</span><span class="cr__d">'+esc(who||m.desc)+'</span></span>'+
           '<span class="lk">Change</span></button>':'')+
         items+notesLine()+'<div class="rule"></div>'+billRows(s.t)+
-        '<div class="rule"></div>'+
-        '<div class="row" style="margin-bottom:9px"><span class="g" style="font-size:11px;letter-spacing:.06em;'+
-        'text-transform:uppercase;font-weight:600">Pay with</span></div>'+methods,
+        '<div class="w__hint">'+IC.lock+'You\u2019ll settle the bill at the restaurant.</div>',
       foot:'<button class="b b--p b--bl" data-a="wgo" data-w="'+id+'"'+(s.ready?'':' disabled')+'>'+
-        (s.ready?'Pay '+R$(s.t.total):'Add your details first')+'</button>',
+        (s.ready?'Send to kitchen \u00b7 '+R$(s.t.total):'Add your details first')+'</button>',
     });
     end();
   }
@@ -824,12 +836,12 @@ const UI=(function(){
   /* =================================================================== */
   function wPaying(wid){
     const el=document.getElementById(wid);if(!el) return;
-    el.querySelector('.w__h h4').textContent='Processing';
+    el.querySelector('.w__h h4').textContent='Sending';
     el.querySelector('.w__b').innerHTML=
       '<div class="ok" style="padding:18px 2px"><div class="mark mark--lg" id="po" style="margin:0 auto 14px">'+
-      IC.spark+'</div><h3 id="pt" style="font-size:16px">Sending to the kitchen…</h3>'+
-      '<p id="ps">Confirming payment</p></div>';
-    el.querySelector('.w__f').remove();
+      IC.spark+'</div><h3 id="pt" style="font-size:16px">Sending to the kitchen\u2026</h3>'+
+      '<p id="ps">Passing it to the captain</p></div>';
+    const f=el.querySelector('.w__f'); if(f) f.remove();
 
     const G=M.g(),po=document.getElementById('po');
     if(G) G.to(po,{rotate:360,duration:1.4,repeat:-1,ease:'none'});
@@ -837,19 +849,21 @@ const UI=(function(){
 
     setTimeout(()=>{
       const t=document.getElementById('pt'),s2=document.getElementById('ps');
-      if(t) t.textContent='Payment received';
-      if(s2) s2.textContent='The kitchen has your order';
+      if(t) t.textContent='Order confirmed';
+      if(s2) s2.textContent='The kitchen has it';
       if(G) G.killTweensOf(po);
       setTimeout(()=>{
-        const o=Cart.place(payM);
+        const o=Cart.place();
         window.order=o;
-        collapse(wid,'Paid '+R$(o.t.total));
+        collapse(wid,'Confirmed \u00b7 '+R$(o.t.total));
         wDone(o);
         Cart.clear();AI.reset();sug={};lastSug=null;
         setChips(['How long?','Track my order','Order again']);
-      },650);
-    },1250);
+      },700);
+    },1500);
   }
+
+
 
   function wDone(o){
     const id=uid('done'), m=R.modes.find(x=>x.id===o.ful.mode);
@@ -860,7 +874,7 @@ const UI=(function(){
         '<div class="ok__g">'+
         '<div><small>Order</small><b>#'+esc(o.id)+'</b></div>'+
         '<div><small>Ready in</small><b>'+o.eta.lo+'–'+o.eta.hi+' min</b></div>'+
-        '<div><small>Paid</small><b>'+R$(o.t.total)+'</b></div></div>'+
+        '<div><small>To pay</small><b>'+R$(o.t.total)+'</b></div></div>'+
         (o.ful&&o.ful.notes?'<div class="ntl ntl--ok">'+IC.spark+
           '<span><b>Kitchen has</b>'+esc(o.ful.notes)+'</span></div>':'')+'</div>',
       foot:'<button class="b b--p b--bl" data-a="wtrack">Track it</button>',
@@ -876,21 +890,60 @@ const UI=(function(){
   /* =================================================================== */
   /* WIDGET · tracking                                                   */
   /* =================================================================== */
+  /* The stage was baked in at checkout, so the tracker said "Preparing your
+     food" forever — reopen it an hour later and it still said that. Position
+     is DERIVED from when the order was placed, which means it is right on
+     first render, right on re-render, and right after a chat switch, with no
+     state to keep in sync. */
+  const TRACK_STEP=5000;                 /* prototype pace */
+  function trackAt(o){
+    const elapsed=Date.now()-(o.at||Date.now());
+    return Math.min(o.stages.length-1, 2+Math.floor(elapsed/TRACK_STEP));
+  }
+  function trackBody(o){
+    const now=trackAt(o);
+    return o.stages.map((s,i)=>{
+      const done=i<now, live=i===now;
+      return '<div class="ts '+(done?'ts--d':live?'ts--a':'ts--p')+'">'+
+        '<div class="ts__r"><div class="td">'+IC.ok+'</div>'+
+        (i<o.stages.length-1?'<div class="tl"></div>':'')+'</div>'+
+        '<div class="ts__b"><div class="ts__n">'+esc(s.l)+'</div>'+
+        '<div class="ts__d">'+(live?'Happening now':done?'Done':'Pending')+'</div>'+
+        '</div></div>';
+    }).join('');
+  }
+  let trackTimer=null;
   function wTrack(o){
     o=o||window.order;if(!o) return;
     const id=uid('trk');
     widget(id,{
-      label:'Order #'+o.id, count:o.eta.lo+'–'+o.eta.hi+' min',
-      body:o.stages.map((s,i)=>
-        '<div class="ts '+(s.d?'ts--d':s.a?'ts--a':'ts--p')+'"><div class="ts__r"><div class="td">'+IC.ok+'</div>'+
-        (i<o.stages.length-1?'<div class="tl"></div>':'')+'</div>'+
-        '<div class="ts__b"><div class="ts__n">'+esc(s.l)+'</div>'+
-        '<div class="ts__d">'+(s.a?'Happening now':s.d?'Done':'Pending')+'</div></div></div>').join(''),
+      label:'Order #'+o.id, count:o.eta.lo+'\u2013'+o.eta.hi+' min',
+      body:trackBody(o),
     });
     const G=M.g(),el=document.getElementById(id);
     if(G) G.from(el.querySelectorAll('.td'),{scale:0,duration:.36,stagger:.08,ease:'back.out(1.7)'});
+
+    /* Tick it forward while it's on screen. Stops itself when the order is
+       complete or the widget leaves the DOM — a chat switch replaces the
+       thread wholesale, and a timer writing into a detached node is a leak
+       that only shows up as a mystery later. */
+    if(trackTimer){clearInterval(trackTimer);trackTimer=null;}
+    let last=trackAt(o);
+    trackTimer=setInterval(()=>{
+      const live=document.getElementById(id);
+      if(!live||!live.isConnected){clearInterval(trackTimer);trackTimer=null;return;}
+      const n=trackAt(o);
+      if(n===last){ if(n>=o.stages.length-1){clearInterval(trackTimer);trackTimer=null;} return; }
+      last=n;
+      const body=live.querySelector('.w__b');
+      if(body) body.innerHTML=trackBody(o);
+      if(G&&body) G.from(body.querySelectorAll('.ts--a .td'),
+        {scale:0,duration:.34,ease:'back.out(2)'});
+      if(n>=o.stages.length-1){clearInterval(trackTimer);trackTimer=null;}
+    },1000);
     end();
   }
+
 
   /* =================================================================== */
   /* WIDGET · browse the menu                                            */
@@ -1145,7 +1198,7 @@ const UI=(function(){
         }
 
         case 'ntopen': noteOpen(b); break;
-        case 'ntdone': noteClose(); break;
+        case 'shclose': sheetClose(); break;
 
         case 'note':{
           const on=b.getAttribute('aria-pressed')!=='true';
@@ -1165,7 +1218,7 @@ const UI=(function(){
             for(let k=0;k<l.q;k++) Cart.add(cfg);
           });
           M.tap(b,.94);
-          if(b.closest('.ntp')) noteClose();
+          if(b.closest('.sh')) sheetClose();
           b.textContent='Added';b.classList.add('b--ok');b.disabled=true;
           const im=b.closest('.cb').querySelector('img');
           if(im) M.fly(im,cartBtn,im.currentSrc||im.src);
@@ -1255,10 +1308,6 @@ const UI=(function(){
         case 'wlater': focusOff(); setChips(AI.chips()); toast('Come back when you\'re ready'); break;
 
         /* ---- payment widget ---- */
-        case 'wpm':
-          payM=b.dataset.m;
-          b.parentElement.querySelectorAll('[data-a="wpm"]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-          break;
         case 'wmode':
           Cart.setFul({mode:null});AI.clearAsk();
           collapse(wid,'Changing order type');
@@ -1342,7 +1391,7 @@ const UI=(function(){
       document.querySelectorAll('[data-a="wgo"]').forEach(btn=>{
         const s=Cart.snap();
         btn.disabled=!s.ready;
-        btn.textContent=s.ready?'Pay '+R$(s.t.total):'Add your details first';
+        btn.textContent=s.ready?'Send to kitchen \u00b7 '+R$(s.t.total):'Add your details first';
       });
     });
 

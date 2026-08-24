@@ -65,21 +65,29 @@ const Cart=(function(){
     getFul:()=>Object.assign({},ful),
     missing, totals, snap,
     ready:()=>lines.length>0&&missing().length===0,
-    place(pay){
+    /* The app doesn't take payment — the restaurant does. `place` records
+       what's owed and where it's settled, and nothing about how. */
+    place(){
       const t=totals(); let prep=0;
       lines.forEach(l=>{prep=Math.max(prep,Menu.item(l.id).min||15);});
       const del=ful.mode==='delivery';
+      /* The tail of this list is per-mode, and it used to be assembled from
+         two independent ternaries — which is how dine-in ended up being told
+         its food was "At the counter" and then "Served". You are sitting at
+         a table; there is no counter in that story. */
+      const tail =
+        del                    ? [{l:'Out for delivery'},{l:'Delivered'}] :
+        ful.mode==='pickup'    ? [{l:'Ready at the counter'},{l:'Collected'}] :
+                                 [{l:'Bringing it to your table'},{l:'Served'}];
+
       return { id:'PP'+Math.floor(1000+Math.random()*9000),
-        pay:{method:pay,amount:t.total}, t, ful:Object.assign({},ful),
+        due:t.total, t, ful:Object.assign({},ful),
         eta:{lo:prep+6,hi:prep+12}, rest:R.name,
-        stages:[
-          {l:'Order confirmed',d:1,a:0},
-          {l:'Kitchen accepted',d:1,a:0},
-          {l:'Preparing your food',d:0,a:1},
-          {l:'Ready',d:0,a:0},
-          {l:del?'Out for delivery':'At the counter',d:0,a:0},
-          {l:ful.mode==='dinein'?'Served':'Collected',d:0,a:0},
-        ] };
+        /* When it was placed, so the tracker can work out where it is now
+           instead of being frozen at whatever was true at checkout. */
+        at:Date.now(),
+        stages:[{l:'Order confirmed'},{l:'Kitchen accepted'},
+                {l:'Preparing your food'},{l:'Ready'}].concat(tail) };
     },
   };
 })();

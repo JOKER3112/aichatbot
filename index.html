@@ -95,15 +95,25 @@
   </div>
 </div>
 
-<!-- Kitchen note editor. Uses the native popover API so it lives in the top
-     layer and can't be clipped by the order widget's own overflow, and gets
-     light-dismiss and Esc for free. Falls back to a plain fixed panel. -->
-<div class="ntp" id="ntpop" popover role="dialog" aria-label="Note for the kitchen">
-  <div class="ntp__b" id="ntpopBody"></div>
-  <div class="ntp__f">
-    <button class="b b--p b--bl" data-a="ntdone">Done</button>
-  </div>
-</div>
+<!-- One bottom sheet, reused. The note editor and the combo peek were two
+     different surfaces doing the same job — a short detour off the thread —
+     and the note in particular opened as a popover in one place and inline
+     in another, so it never felt like the same thing twice.
+
+     It is a sheet rather than the popover it replaced because a sheet is
+     what a phone does for a sub-task: it comes from the edge you are
+     already touching and it goes back the same way. -->
+<div class="shScrim" id="shScrim"></div>
+<section class="sh" id="sh" role="dialog" aria-modal="true" aria-labelledby="shTitle" hidden>
+  <button class="sh__grab" id="shGrab" aria-label="Close"><i></i></button>
+  <header class="sh__h"><h4 id="shTitle"></h4>
+    <button class="sh__x" data-a="shclose" aria-label="Close">
+      <svg data-i viewBox="0 0 24 24"><path d="M6.6 6.6 17.4 17.4M17.4 6.6 6.6 17.4"/></svg>
+    </button>
+  </header>
+  <div class="sh__b" id="shBody"></div>
+  <footer class="sh__f" id="shFoot"></footer>
+</section>
 
 <div class="islScrim" id="islScrim"></div>
 <section class="isl" id="isl" role="dialog" aria-label="Your chats">
