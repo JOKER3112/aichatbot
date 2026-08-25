@@ -58,6 +58,15 @@
       <div class="cp" id="cp">
         <label class="sr" for="inp">Ask Petpooja AI</label>
         <span class="cp__sweep" aria-hidden="true"><i></i></span>
+        <!-- The focus stroke, and only the focus stroke. Thinking has its own
+             treatment further down the stylesheet and does not touch this.
+
+             It has to be a real element rather than a background layer on .cp:
+             the border-box gradient trick puts the gradient under the WHOLE
+             box, and because --composer is only 72% opaque it washed through
+             the middle of the field. Masked to 1px, nothing reaches the
+             inside — full stroke, flat interior. -->
+        <span class="cp__ring" aria-hidden="true"></span>
 
         <button class="cbt cbt--cart" id="cartBtn" data-a="order" aria-label="View your order">
           <svg data-i viewBox="0 0 24 24"><path d="M2.8 4h2.4l2.5 10.6h9.6l2.3-7.8H6.2"/><circle cx="9.6" cy="19" r="1.5"/><circle cx="17.4" cy="19" r="1.5"/></svg>

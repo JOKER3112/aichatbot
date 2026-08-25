@@ -1172,10 +1172,15 @@ img{display:block;max-width:100%;}
 .cp>textarea,.cp>.ph{align-self:center;}
 [data-theme='light'] .cp{border-color:var(--line);}
 /* Focus is an AI state, not an action, so it wears the AI gradient rather
-   than the button colour. */
-.cp.on{border-color:transparent;
-  background:linear-gradient(var(--composer),var(--composer)) padding-box,
-             linear-gradient(120deg,var(--ai-1),var(--ai-2) 55%,var(--ai-3)) border-box;}
+   than the button colour — but on the EDGE only.
+
+   This used to be the two-layer background trick: the gradient on
+   border-box with a `--composer` veil on padding-box over it. The catch is
+   that --composer is 72% opaque, so 28% of the gradient came through the
+   middle and the whole field turned purple. That was never the intent; it
+   was a side effect of a translucent composer. The lit edge now lives on
+   .cp__ring, which is masked to 1px and cannot reach the interior. */
+.cp.on{border-color:transparent;}
 
 /* Focused. The field goes full width on row one; row two carries the
    controls, with an empty cell between cart and mic doing the spacing. */
@@ -1273,6 +1278,38 @@ img{display:block;max-width:100%;}
    ====================================================================== */
 @property --cp-sweep{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
 
+/* ---------------------------------------------------------------- focus
+   The whole edge lit, and nothing else. A full 120° gradient runs the
+   complete border — every side, both ends — so it reads as one lit outline
+   rather than a highlight sitting somewhere on it.
+
+   Why an element and not a background layer: the border-box trick paints
+   the gradient under the WHOLE box, and --composer is only 72% opaque, so
+   28% of it came through and turned the field purple. Masked to 1px, this
+   physically cannot reach the interior.
+
+   inset:-1px + padding:1px lands the ring exactly on .cp's own 1px border
+   (absolute inset measures from the padding box, so 0 would sit a pixel
+   inside). mask-composite:exclude punches the middle out. */
+.cp__ring{
+  position:absolute;inset:-1px;border-radius:inherit;padding:1px;
+  pointer-events:none;z-index:3;opacity:0;
+  transition:opacity .25s ease;
+  background:linear-gradient(120deg,var(--ai-1),var(--ai-2) 55%,var(--ai-3));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+          mask-composite:exclude;
+}
+/* focus only — thinking has its own treatment and must not inherit this */
+.cp.on .cp__ring{opacity:1;}
+.cp.think .cp__ring{opacity:0;}
+
+/* -------------------------------------------------------------- thinking
+   Unchanged. The conic on border-box with the --composer veil over it,
+   sweeping 0 → 360° on a 1.4s linear loop. The angle animates through a
+   registered custom property rather than a rotate(), because rotating the
+   element would spin the capsule mask and the rounded ends would wobble. */
 .cp.think{
   border-color:transparent;
   background:
