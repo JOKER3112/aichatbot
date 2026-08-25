@@ -76,6 +76,18 @@
         </button>
         <button class="snd" id="send" aria-label="Send" disabled>
           <svg data-i viewBox="0 0 24 24"><path d="M7.3 16.7 16.6 7.4M9.1 7.4h7.5v7.5"/></svg>
+          <!-- While the assistant is working the arrow steps aside and this
+               takes over: a 270° arc on a faint full-circle track. It's the
+               same idea as the border sweep, at button scale — the composer
+               is a closed rounded shape, so "busy" travels around it rather
+               than across it. Purely decorative, hence aria-hidden; the
+               button's disabled state is what assistive tech reads. -->
+          <span class="snd__arc" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle class="snd__track" cx="12" cy="12" r="9"/>
+              <circle class="snd__spin"  cx="12" cy="12" r="9"/>
+            </svg>
+          </span>
         </button>
       </div>
     </div>

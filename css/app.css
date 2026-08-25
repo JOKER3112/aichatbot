@@ -42,6 +42,26 @@
   --star:#F0B429;
 
   --f:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+
+  /* ------------------------------ TYPE SCALE ------------------------------
+     Figtree, four sizes, and nothing between them. The file used to carry
+     10, 10.5, 11, 11.5, 11.8, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16,
+     16.5, 17 and 18 — seventeen sizes, most of them a half-pixel apart from
+     a neighbour, which is not a scale, it's an accident of successive edits.
+
+     Every size below is assigned by ROLE, not by rounding what was there:
+
+       12 / 16   overline, meta, captions, counters, notes
+       14 / 20   body, buttons, chips, list rows, form labels
+       16 / 24   reading text, card titles, and every input
+       20 / 26   money, and the one heading on a screen
+
+     16 on inputs is not a style choice: iOS zooms the viewport when a
+     focused field is under 16px, and that zoom never fully undoes itself. */
+  --t-cap:12px;  --lh-cap:16px;
+  --t-body:14px; --lh-body:20px;
+  --t-read:16px; --lh-read:24px;
+  --t-lead:20px; --lh-lead:26px;
   --pad:clamp(12px,4.2vw,16px);
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
@@ -171,7 +191,7 @@ img{display:block;max-width:100%;}
 .hd__l{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
 .hd__r{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
 .hd__t{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.hd__n{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hd__n{font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* 10px of padding matches the switcher pill's inset so the status line sits
    under the title text, not under the pill's edge. */
 .hd__s{padding-left:10px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:5px;
@@ -202,7 +222,7 @@ img{display:block;max-width:100%;}
 .ico svg{width:18px;height:18px;fill:currentColor;}
 .pill{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;
   border-radius:10px;background:var(--brand);color:var(--brand-ink);border:2px solid var(--bg);
-  font-size:11px;font-weight:600;line-height:1;display:none;place-items:center;}
+  font-size:12px;font-weight:600;line-height:1;display:none;place-items:center;}
 .pill.on{display:grid;}
 
 /* ================================ THREAD ================================ */
@@ -225,7 +245,7 @@ img{display:block;max-width:100%;}
 
 [data-theme='light'] .wel .hi,
 [data-theme='light'] .wel .nm{color:var(--brand-dark);}
-.wel .say .t{margin-top:8px;}
+.wel .say .t{margin-top:8px;font-size:12px}
 /* (.grid2 removed with the eight-chip opening screen.) */
 
 /* ------------------------------- messages ------------------------------- */
@@ -241,17 +261,17 @@ img{display:block;max-width:100%;}
   padding-left:var(--lane);padding-right:var(--pad);min-width:0;}
 .m--u{justify-content:flex-end;}
 .m--ai{flex-direction:column;align-items:stretch;gap:9px;}
-.say{font-size:14.5px;line-height:1.5;letter-spacing:-.1px;color:var(--text);
+.say{font-size:16px;line-height:1.5;letter-spacing:-.1px;color:var(--text);
   min-width:0;overflow-wrap:anywhere;word-break:break-word;}
 .say b{font-weight:600;}
-.say .sub{display:block;margin-top:5px;font-size:13px;color:var(--text-2);}
-.say .t{margin-top:7px;font-size:11px;color:var(--text-3);}
+.say .sub{display:block;margin-top:5px;font-size:14px;color:var(--text-2);}
+.say .t{margin-top:7px;font-size:12px;color:var(--text-3);}
 /* The follow-up question. Same bubble, one step quieter than the answer —
    it reads as the assistant still talking, not as a control. */
 .ask{display:block;margin-top:6px;color:var(--text-2);}
 /* Only the user speaks in a bubble now. */
 .bub{max-width:84%;min-width:0;padding:11px 14px;
-  font-size:15px;line-height:1.45;overflow-wrap:anywhere;word-break:break-word;}
+  font-size:16px;line-height:1.45;overflow-wrap:anywhere;word-break:break-word;}
 .bub b{font-weight:600;}
 /* Orange bubble, white text — matches the badge in the Figma frame. */
 /* Your message is a card with the warm gradient edge, not a slab of primary
@@ -269,7 +289,7 @@ img{display:block;max-width:100%;}
   background:var(--card);border:1px solid transparent;box-shadow:var(--sh-2);
   backdrop-filter:none;-webkit-backdrop-filter:none;}
 .bub--u .t{display:flex;justify-content:flex-end;gap:3px;margin-top:4px;
-  font-size:11px;color:var(--text-3);}
+  font-size:12px;color:var(--text-3);}
 
 
 /* ============================== CHAT WIDGETS ============================
@@ -285,11 +305,11 @@ img{display:block;max-width:100%;}
 /* Waiting on you: the same stroke, brighter. Focus mode already dims
    everything else, which says "this one" far louder than an edge can. */
 .w--hot{border-color:var(--line)!important;}
-.w.done .w__d .go{color:var(--text-2);}
+.w.done .w__d .go{color:var(--text-2);font-size:12px}
 .w__h{display:flex;align-items:center;gap:8px;padding:11px 12px 0;min-width:0;}
-.w__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+.w__h h4{margin:0;flex:1;min-width:0;font-size:12px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.w__h .n{font-size:11px;color:var(--text-3);flex:0 0 auto;}
+.w__h .n{font-size:12px;color:var(--text-3);flex:0 0 auto;}
 /* A widget that renders the whole menu was 25 rows tall — a 1500px card
    inside a scrolling thread, which means two scroll contexts fighting and
    no way to see the widget's own footer. Long bodies scroll themselves. */
@@ -307,7 +327,7 @@ img{display:block;max-width:100%;}
    that still wants your attention, and this one is done. Four resolved
    widgets used to stack up as four boxes you had to read past. */
 .w__d{display:none;align-items:center;gap:7px;padding:2px 0 0;
-  font-size:13px;min-width:0;}
+  font-size:14px;min-width:0;}
 .w.done .w__h,.w.done .w__b,.w.done .w__f{display:none;}
 .w.done .w__d{display:flex;}
 .w.done{background:none!important;border-color:transparent!important;
@@ -338,12 +358,12 @@ img{display:block;max-width:100%;}
 .opts{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
 .ob{position:relative;min-height:32px;padding:0 12px;border-radius:var(--r-pill);
   background:var(--glass);border:1px solid var(--line);
-  font-size:13px;font-weight:500;color:var(--text);
+  font-size:14px;font-weight:500;color:var(--text);
   display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;
   white-space:nowrap;overflow:hidden;
   transition:background .16s,border-color .16s,color .16s,padding .16s;}
 .ob>span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.ob small{flex:0 0 auto;font-size:11.5px;font-weight:400;color:var(--text-3);}
+.ob small{flex:0 0 auto;font-size:12px;font-weight:400;color:var(--text-3);}
 .ob::before{content:'';flex:0 0 0;width:0;height:13px;overflow:hidden;
   background:currentColor;transition:width .16s ease,flex-basis .16s ease;
   -webkit-mask:var(--tk) center/contain no-repeat;mask:var(--tk) center/contain no-repeat;}
@@ -363,13 +383,13 @@ img{display:block;max-width:100%;}
 .cr[aria-pressed='true'] .bx{background:var(--brand);border-color:var(--brand);}
 .bx svg{width:12px;height:12px;color:var(--brand-ink);opacity:0;}
 .cr[aria-pressed='true'] .bx svg{opacity:1;}
-.cr__n{flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cr__p{font-size:13px;font-weight:500;color:var(--text-2);flex:0 0 auto;}
+.cr__n{flex:1;min-width:0;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cr__p{font-size:14px;font-weight:500;color:var(--text-2);flex:0 0 auto;}
 .cr__i{width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:var(--glass-2);
   display:grid;place-items:center;}
 .cr__i svg{width:17px;height:17px;color:var(--text);}
 .cr__b{flex:1;min-width:0;}
-.cr__d{font-size:11px;color:var(--text-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cr__d{font-size:12px;color:var(--text-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rd{width:19px;height:19px;flex:0 0 19px;border-radius:50%;border:1.5px solid var(--line-strong);
   display:grid;place-items:center;}
 .cr[aria-pressed='true'] .rd{border-color:var(--brand);}
@@ -397,14 +417,14 @@ img{display:block;max-width:100%;}
 
 .fl__box input,.fl__box textarea{display:block;width:100%;min-width:0;height:44px;
   padding:0 11px;margin:0;border:0;outline:0;background:none;color:var(--text);
-  font-size:15px;font-weight:500;border-radius:8px;-webkit-appearance:none;appearance:none;}
+  font-size:16px;font-weight:500;border-radius:8px;-webkit-appearance:none;appearance:none;}
 .fl__box textarea{height:auto;min-height:70px;padding:11px 11px 10px;line-height:1.45;
   font-weight:400;resize:none;}
 
 /* Default state: the label IS the placeholder, sitting inside the field. */
 .fl__lab{position:absolute;left:0;top:0;transform-origin:top left;
   transform:translate(11px,11px);max-width:calc(100% - 24px);
-  font-size:15px;font-weight:400;line-height:22px;color:var(--text-3);
+  font-size:14px;font-weight:400;line-height:22px;color:var(--text-3);
   pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:transform .17s cubic-bezier(.2,0,0,1),color .17s,font-weight .17s;}
 
@@ -415,7 +435,7 @@ img{display:block;max-width:100%;}
   border:1px solid var(--line);border-radius:8px;pointer-events:none;
   overflow:hidden;min-width:0;transition:border-color .17s;}
 .fl__ol legend{float:unset;width:auto;padding:0;overflow:hidden;white-space:nowrap;
-  font-size:11.8px;line-height:11px;visibility:hidden;max-width:.01px;
+  font-size:12px;line-height:11px;visibility:hidden;max-width:.01px;
   transition:max-width .05s;}
 .fl__ol legend span{display:inline-block;padding:0 5px;opacity:0;visibility:visible;}
 
@@ -436,11 +456,11 @@ img{display:block;max-width:100%;}
 /* Error. */
 .fl.bad .fl__ol{border-color:var(--nonveg)!important;}
 .fl.bad .fl__lab{color:var(--nonveg)!important;}
-.fl em{display:block;font-size:11px;font-style:normal;line-height:1.4;
+.fl em{display:block;font-size:12px;font-style:normal;line-height:1.4;
   color:var(--nonveg);margin:6px 0 0;padding-left:12px;}
 
 .fl .cnt{position:absolute;right:11px;top:0;height:44px;display:flex;align-items:center;
-  font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;
+  font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;
   pointer-events:none;transition:color .2s,opacity .2s;}
 .fl .cnt.ok{color:var(--veg);}
 
@@ -450,7 +470,7 @@ img{display:block;max-width:100%;}
 .fl--tel .fl__box input{padding-left:48px;padding-right:58px;
   letter-spacing:.04em;font-variant-numeric:tabular-nums;}
 .fl--tel .pre{position:absolute;left:11px;top:0;height:44px;display:flex;align-items:center;
-  font-size:15px;font-weight:500;color:var(--text-2);pointer-events:none;transition:color .2s;}
+  font-size:16px;font-weight:500;color:var(--text-2);pointer-events:none;transition:color .2s;}
 .fl--tel .fl__box input:focus~.pre{color:var(--text);}
 .fl--tel .fl__lab{transform:translate(12px,-9px) scale(.786);font-weight:500;color:var(--text-2);}
 .fl--tel .fl__ol legend{max-width:100%;}
@@ -464,7 +484,7 @@ img{display:block;max-width:100%;}
 /* --------------------------------- chips --------------------------------- */
 .chip{flex:0 0 auto;min-height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;
   border-radius:var(--r-pill);background:var(--glass);border:1px solid var(--line);
-  font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;}
+  font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;}
 .chip--b{border-color:rgba(243,106,32,.45);background:rgba(243,106,32,.12);color:var(--brand);}
 /* In the thread now, directly under the reply that offered them. Parked
    above the composer they were a permanent shelf with no relationship to
@@ -479,7 +499,7 @@ img{display:block;max-width:100%;}
 .sug>*:first-child{margin-left:var(--lane);}
 .sug>*:last-child{margin-right:var(--pad);}
 .sug::-webkit-scrollbar{display:none;}
-.sug .chip{min-height:34px;padding:0 13px;font-size:12.5px;}
+.sug .chip{min-height:34px;padding:0 13px;font-size:14px;}
 /* Focus mode still parks them, it just parks them where they now live. */
 .sug.hid{opacity:0;transform:translateY(6px);max-height:0;padding-block:0;
   pointer-events:none;overflow:hidden;}
@@ -527,7 +547,7 @@ img{display:block;max-width:100%;}
   background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,transparent 34%,transparent 62%,rgba(0,0,0,.28) 100%);}
 .fc__tag{position:absolute;top:9px;left:9px;right:9px;display:flex;gap:5px;flex-wrap:wrap;z-index:2;}
 .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--r-pill);
-  font-size:11px;font-weight:500;background:rgba(8,9,11,.7);color:#fff;
+  font-size:12px;font-weight:500;background:rgba(8,9,11,.7);color:#fff;
   border:1px solid rgba(255,255,255,.18);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   white-space:nowrap;overflow:hidden;}
@@ -536,7 +556,7 @@ img{display:block;max-width:100%;}
 .tag--sp{background:rgba(232,107,88,.92);color:#fff;border-color:transparent;}
 
 .fc__b{padding:12px 13px 13px;min-width:0;}
-.fc__n{font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.25;
+.fc__n{font-size:16px;font-weight:600;letter-spacing:-.02em;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* One metadata row: rating, how many rated it, then the diet mark. */
@@ -552,19 +572,19 @@ img{display:block;max-width:100%;}
 .veg--n{border-color:var(--nonveg);}
 .veg--n::after{background:var(--nonveg);}
 
-.fc__d{margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--text-2);
+.fc__d{margin:8px 0 0;font-size:14px;line-height:1.4;color:var(--text-2);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 
 /* Money row. Price and portion stack so the number owns its own line. */
 .fc__f{display:flex;align-items:center;gap:9px;margin-top:13px;min-width:0;}
 .fc__p{flex:0 0 auto;min-width:0;}
-.fc__p .pr{display:block;font-size:16.5px;font-weight:600;letter-spacing:-.02em;
+.fc__p .pr{display:block;font-size:20px;font-weight:600;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;line-height:1.15;}
-.fc__p small{display:block;font-size:11px;color:var(--text-3);margin-top:2px;}
+.fc__p small{display:block;font-size:12px;color:var(--text-3);margin-top:2px;}
 /* One action, and the line under it that replaces the Customize button. */
 .fc__cta{margin-left:auto;flex:0 1 auto;min-width:0;display:flex;
   flex-direction:column;align-items:flex-end;gap:3px;}
-.fc__cta small{font-size:10.5px;line-height:1;color:var(--text-3);
+.fc__cta small{font-size:12px;line-height:1;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .fc__f .b{margin-left:auto;}
 .fc__cta .b{margin-left:0;}
@@ -572,7 +592,7 @@ img{display:block;max-width:100%;}
 
 /* -------------------------------- buttons -------------------------------- */
 .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;
-  padding:0 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:500;
+  padding:0 14px;border-radius:var(--r-pill);font-size:14px;font-weight:500;
   white-space:nowrap;overflow:hidden;min-width:0;transition:background .18s,opacity .18s;}
 .b svg{width:15px;height:15px;fill:currentColor;flex:0 0 15px;}
 .b:disabled{opacity:.5;pointer-events:none;}
@@ -602,9 +622,9 @@ img{display:block;max-width:100%;}
 .sg__b{flex:1;min-width:0;display:block;}
 .sg__n{display:block;font-size:14px;font-weight:500;letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sg__d{display:block;font-size:11.5px;line-height:1.35;color:var(--text-3);margin-top:2px;
+.sg__d{display:block;font-size:14px;line-height:1.35;color:var(--text-3);margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sg__p{flex:0 0 auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+.sg__p{flex:0 0 auto;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
 .sg__x{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;
   border:1px solid var(--line-strong);color:var(--text);transition:background .16s,border-color .16s;}
 .sg__x svg{width:15px;height:15px;fill:currentColor;}
@@ -620,12 +640,12 @@ img{display:block;max-width:100%;}
    things you could say, so an unselected one has to be quiet.
    -------------------------------------------------------------------------- */
 .nt{margin-top:14px;padding-top:13px;border-top:1px solid var(--line-soft);min-width:0;}
-.nt__h{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+.nt__h{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
   color:var(--text-2);margin-bottom:9px;}
 .nt__c{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;min-width:0;}
 .nb{min-height:30px;padding:0 10px;border-radius:var(--r-pill);
   background:var(--glass);border:1px solid var(--line-soft);
-  font-size:12.5px;font-weight:500;color:var(--text-2);
+  font-size:14px;font-weight:500;color:var(--text-2);
   display:inline-flex;align-items:center;gap:5px;max-width:100%;
   white-space:nowrap;overflow:hidden;
   transition:background .15s,border-color .15s,color .15s;}
@@ -652,9 +672,9 @@ img{display:block;max-width:100%;}
   transition:background .16s,border-color .16s;}
 .ntt:hover{background:var(--glass-2);}
 .ntt svg{width:14px;height:14px;flex:0 0 14px;color:var(--text-3);}
-.ntt__t{flex:1;min-width:0;font-size:12.5px;color:var(--text-3);
+.ntt__t{flex:1;min-width:0;font-size:14px;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ntt__a{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--text-2);}
+.ntt__a{flex:0 0 auto;font-size:14px;font-weight:600;color:var(--text-2);}
 /* Set, it stops looking like an empty slot and starts looking like content. */
 .ntt--on{border-style:solid;border-color:var(--line-soft);background:var(--card-2);}
 .ntt--on svg{color:var(--brand);}
@@ -712,9 +732,9 @@ img{display:block;max-width:100%;}
   border-radius:12px;background:var(--glass);min-width:0;}
 .ntl svg{width:14px;height:14px;flex:0 0 14px;color:var(--brand);margin-top:2px;}
 [data-theme='light'] .ntl svg{color:var(--brand-dark);}
-.ntl span{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--text-2);
+.ntl span{flex:1;min-width:0;font-size:14px;line-height:1.45;color:var(--text-2);
   overflow-wrap:anywhere;}
-.ntl b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.07em;
+.ntl b{display:block;font-size:12px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
 .ntl--ok{margin-top:14px;text-align:left;}
 
@@ -749,7 +769,7 @@ img{display:block;max-width:100%;}
    ======================================================================== */
 .sk{margin:12px 0 0;min-width:0;}
 .sk__h{display:flex;align-items:center;gap:6px;padding:0 var(--pad) 8px;
-  font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   color:var(--text-3);}
 .sk__h svg{width:13px;height:13px;flex:0 0 13px;fill:var(--ai-2);}
 [data-theme='light'] .sk__h svg{fill:#6B54D6;}
@@ -794,7 +814,7 @@ img{display:block;max-width:100%;}
   background:linear-gradient(180deg,rgba(0,0,0,.34) 0%,transparent 38%);}
 .sk__tags{position:absolute;top:9px;left:9px;right:9px;display:flex;gap:5px;z-index:2;}
 .sk__tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;
-  border-radius:var(--r-pill);font-size:11px;font-weight:500;
+  border-radius:var(--r-pill);font-size:12px;font-weight:500;
   background:rgba(8,9,11,.62);color:#fff;border:1px solid rgba(255,255,255,.16);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   white-space:nowrap;overflow:hidden;}
@@ -805,10 +825,10 @@ img{display:block;max-width:100%;}
 
 .sk__b{padding:11px 12px 11px;min-width:0;
   display:flex;flex-direction:column;height:calc(100% - 118px);}
-.sk__n{margin:0;font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.2;
+.sk__n{margin:0;font-size:16px;font-weight:600;letter-spacing:-.02em;line-height:1.2;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sk__m{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;margin-top:5px;
-  font-size:11.5px;color:var(--text-3);min-width:0;overflow:hidden;}
+  font-size:12px;color:var(--text-3);min-width:0;overflow:hidden;}
 .sk__m .st{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--text);
   flex:0 0 auto;}
 .sk__m .st svg{width:11px;height:11px;fill:var(--star);}
@@ -816,11 +836,11 @@ img{display:block;max-width:100%;}
 .sk__m>span:not(.st):not(.dt):not(.dot){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* One line. Two lines of description is the difference between a card you
    scan and a card you read, and this one is meant to be swiped. */
-.sk__d{margin:6px 0 0;font-size:12.5px;line-height:1.4;color:var(--text-2);
+.sk__d{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--text-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sk__f{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:9px;min-width:0;}
 .sk__p{flex:0 0 auto;display:flex;align-items:baseline;gap:6px;
-  font-size:17px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 .sk__p s{font-size:12px;font-weight:400;color:var(--text-3);}
 .sk__f .b{margin-left:auto;min-height:38px;}
 
@@ -835,7 +855,7 @@ img{display:block;max-width:100%;}
 /* --------------------------------- moods -------------------------------- */
 .mood{margin-top:16px;min-width:0;}
 .mood__h{padding:0 var(--pad);margin-bottom:8px;
-  font-size:13.5px;font-weight:500;color:var(--text-2);}
+  font-size:14px;font-weight:500;color:var(--text-2);}
 /* Two up, and the row scrolls — four visible at once is the most you can
    weigh without it turning back into a list of filters. */
 .mood__g{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:9px;
@@ -867,30 +887,30 @@ img{display:block;max-width:100%;}
              var(--card);
   box-shadow:var(--sh-1);}
 
-.mc__i{position:relative;z-index:1;font-size:18px;line-height:1;}
-.mc__t{position:relative;z-index:1;font-size:12.5px;font-weight:500;line-height:1.3;
+.mc__i{position:relative;z-index:1;font-size:20px;line-height:1;}
+.mc__t{position:relative;z-index:1;font-size:12px;font-weight:500;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;}
 
 /* ------------------------------ combo peek ------------------------------ */
 .peek{padding:14px 0 4px;min-width:0;}
 /* (.peek__h removed — the sheet has a real header now, so the card no
    longer carries its own kicker.) */
-.peek__n{margin:2px 0 11px;font-size:17px;font-weight:600;letter-spacing:-.02em;}
+.peek__n{margin:2px 0 11px;font-size:20px;font-weight:600;letter-spacing:-.02em;}
 .peek__l{border-radius:12px;background:var(--glass);padding:4px 10px;min-width:0;}
 .peek__i{display:flex;align-items:center;gap:10px;padding:8px 0;min-width:0;}
 .peek__i+.peek__i{box-shadow:inset 0 1px 0 var(--line-soft);}
 .peek__i img{width:34px;height:34px;flex:0 0 34px;border-radius:9px;object-fit:cover;
   background:var(--glass-2);}
-.peek__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13.5px;
+.peek__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .peek__in .veg{flex:0 0 12px;width:12px;height:12px;}
 .peek__in .veg::after{width:5px;height:5px;}
 .peek__q{flex:0 0 auto;font-size:12px;color:var(--text-2);font-variant-numeric:tabular-nums;}
-.peek__p{flex:0 0 auto;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;
+.peek__p{flex:0 0 auto;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;
   min-width:44px;text-align:right;}
-.peek__f{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-size:13px;
+.peek__f{display:flex;align-items:baseline;gap:8px;margin-top:12px;font-size:14px;
   color:var(--text-2);}
-.peek__f b{margin-left:auto;font-size:16.5px;font-weight:600;color:var(--text);
+.peek__f b{margin-left:auto;font-size:20px;font-weight:600;color:var(--text);
   font-variant-numeric:tabular-nums;}
 .peek__f s{color:var(--text-3);font-variant-numeric:tabular-nums;}
 
@@ -908,24 +928,24 @@ img{display:block;max-width:100%;}
   min-width:0;overflow:hidden;}
 
 .cb__h{display:flex;align-items:center;gap:8px;min-width:0;}
-.cb__k{flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+.cb__k{flex:1;min-width:0;font-size:12px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;color:var(--text-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* The only tinted thing on the card, because it's the only claim it makes. */
 .cb__sv{flex:0 0 auto;padding:3px 8px;border-radius:var(--r-pill);
-  font-size:11px;font-weight:600;white-space:nowrap;
+  font-size:12px;font-weight:600;white-space:nowrap;
   background:rgba(79,193,124,.14);color:var(--veg);}
 [data-theme='light'] .cb__sv{background:rgba(46,139,87,.12);color:#1F6B42;}
 
-.cb__n{margin:6px 0 0;font-size:15.5px;font-weight:600;letter-spacing:-.02em;line-height:1.25;}
-.cb__d{margin:5px 0 0;font-size:13px;line-height:1.4;color:var(--text-2);}
+.cb__n{margin:6px 0 0;font-size:16px;font-weight:600;letter-spacing:-.02em;line-height:1.25;}
+.cb__d{margin:5px 0 0;font-size:14px;line-height:1.4;color:var(--text-2);}
 
 .cb__l{margin-top:11px;border-radius:12px;background:var(--glass);padding:4px 8px;min-width:0;}
 .cb__i{display:flex;align-items:center;gap:9px;padding:6px 0;min-width:0;}
 .cb__i+.cb__i{box-shadow:inset 0 1px 0 var(--line-soft);}
 .cb__i img{width:30px;height:30px;flex:0 0 30px;border-radius:8px;object-fit:cover;
   background:var(--glass-2);}
-.cb__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:13px;
+.cb__in{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cb__in .veg{flex:0 0 12px;width:12px;height:12px;}
 .cb__in .veg::after{width:5px;height:5px;}
@@ -934,19 +954,19 @@ img{display:block;max-width:100%;}
 
 .cb__f{display:flex;align-items:center;gap:10px;margin-top:12px;min-width:0;}
 .cb__p{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;min-width:0;}
-.cb__p .pr{font-size:17px;font-weight:600;letter-spacing:-.02em;
+.cb__p .pr{font-size:20px;font-weight:600;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
-.cb__p s{font-size:13px;color:var(--text-3);text-decoration-thickness:1px;
+.cb__p s{font-size:14px;color:var(--text-3);text-decoration-thickness:1px;
   font-variant-numeric:tabular-nums;}
 .cb__f .b{margin-left:auto;}
 
 /* ---------------------------- configured dish ---------------------------- */
 .bt__t{display:flex;gap:11px;min-width:0;}
 .bt__t img{width:66px;height:66px;flex:0 0 66px;border-radius:var(--r-sm);object-fit:cover;background:var(--glass-2);}
-.bt__n{font-size:15px;font-weight:600;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt__n{font-size:16px;font-weight:600;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sp{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-width:0;}
 .sp span{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--r-pill);
-  font-size:11px;font-weight:400;background:var(--glass-2);color:var(--text-2);
+  font-size:12px;font-weight:400;background:var(--glass-2);color:var(--text-2);
   white-space:nowrap;overflow:hidden;max-width:100%;}
 .sp .x{background:rgba(232,107,88,.16);color:var(--nonveg);}
 .sp .x svg{width:10px;height:10px;fill:currentColor;flex:0 0 10px;}
@@ -973,34 +993,34 @@ img{display:block;max-width:100%;}
 .ln__t{display:flex;align-items:baseline;gap:10px;min-width:0;}
 .ln__n{flex:1;min-width:0;font-size:14px;font-weight:500;letter-spacing:-.01em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ln__p{flex:0 0 auto;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
-.ln__c{font-size:11px;color:var(--text-3);margin-top:2px;
+.ln__p{flex:0 0 auto;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;}
+.ln__c{font-size:12px;color:var(--text-3);margin-top:2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ln__x{font-size:11px;color:var(--nonveg);margin-top:2px;}
+.ln__x{font-size:12px;color:var(--nonveg);margin-top:2px;}
 .ln__f{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;}
 .stp{display:inline-flex;align-items:center;gap:2px;border-radius:var(--r-pill);
   background:var(--glass-2);padding:2px;flex:0 0 auto;}
 .stp button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;}
 .stp button svg{width:13px;height:13px;}
-.stp span{min-width:20px;text-align:center;font-size:12.5px;font-weight:600;
+.stp span{min-width:20px;text-align:center;font-size:12px;font-weight:600;
   font-variant-numeric:tabular-nums;}
 /* Quiet. These are corrections, not calls to action. */
-.lk{font-size:11.5px;font-weight:500;color:var(--text-3);flex:0 0 auto;
+.lk{font-size:12px;font-weight:500;color:var(--text-3);flex:0 0 auto;
   text-decoration:underline;text-underline-offset:2px;}
 .lk:hover{color:var(--text-2);}
 .lk--x{color:var(--text-3);}
 
 /* --------------------------------- the bill ------------------------------
    Every line the same weight except the one you actually care about. */
-.row{display:flex;align-items:center;gap:10px;font-size:12.5px;min-width:0;}
+.row{display:flex;align-items:center;gap:10px;font-size:12px;min-width:0;}
 .row+.row{margin-top:7px;}
 .row .g{flex:1;min-width:0;color:var(--text-3);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .row b{flex:0 0 auto;font-weight:500;color:var(--text-2);font-variant-numeric:tabular-nums;}
 .tot{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;min-width:0;}
-.tot b{margin-left:auto;flex:0 0 auto;font-size:17px;letter-spacing:-.02em;
+.tot b{margin-left:auto;flex:0 0 auto;font-size:20px;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
-.note{font-size:11px;color:var(--text-3);margin-top:8px;}
+.note{font-size:12px;color:var(--text-3);margin-top:8px;}
 
 /* ------------------------------- confirmation ---------------------------- */
 .ok{text-align:center;padding:6px 2px 2px;}
@@ -1008,12 +1028,12 @@ img{display:block;max-width:100%;}
   background:linear-gradient(135deg,#F36A20,#F2AA83);}
 .ok__r div{width:100%;height:100%;border-radius:50%;background:var(--card);display:grid;place-items:center;}
 .ok__r svg{width:32px;height:32px;color:var(--veg);stroke-width:2;}
-.ok h3{margin:0 0 5px;font-size:17px;font-weight:600;letter-spacing:-.02em;}
-.ok p{margin:0;font-size:13px;color:var(--text-2);}
+.ok h3{margin:0 0 5px;font-size:20px;font-weight:600;letter-spacing:-.02em;}
+.ok p{margin:0;font-size:14px;color:var(--text-2);}
 .ok__g{display:flex;gap:8px;margin-top:14px;min-width:0;}
 .ok__g div{flex:1;min-width:0;padding:10px;border-radius:var(--r-sm);background:var(--glass-2);text-align:left;}
-.ok__g small{display:block;font-size:10px;color:var(--text-3);}
-.ok__g b{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+.ok__g small{display:block;font-size:12px;color:var(--text-3);}
+.ok__g b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
 
 /* --------------------------------- tracking ------------------------------ */
 .ts{display:flex;gap:12px;min-width:0;}
@@ -1051,9 +1071,9 @@ img{display:block;max-width:100%;}
    part that hasn't happened yet. */
 .ts--a .tl{background:linear-gradient(180deg,var(--brand),var(--line) 70%);}
 .ts__b{padding-bottom:14px;min-width:0;}
-.ts__n{font-size:13px;font-weight:500;}
+.ts__n{font-size:14px;font-weight:500;}
 .ts--p .ts__n{color:var(--text-3);font-weight:400;}
-.ts__d{font-size:11px;color:var(--text-2);margin-top:1px;}
+.ts__d{font-size:12px;color:var(--text-2);margin-top:1px;}
 
 /* --------------------------------- browse -------------------------------- */
 .cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;min-width:0;}
@@ -1063,10 +1083,10 @@ img{display:block;max-width:100%;}
 .mr:last-child{border-bottom:0;}
 .mr img{width:46px;height:46px;flex:0 0 46px;border-radius:10px;object-fit:cover;background:var(--glass-2);}
 .mr__b{flex:1;min-width:0;}
-.mr__n{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:0;}
+.mr__n{font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:0;}
 .mr__n span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mr__p{font-size:13px;font-weight:600;margin-top:2px;}
-.off{font-size:11px;font-weight:500;color:var(--text-3);padding:5px 9px;border-radius:8px;
+.mr__p{font-size:14px;font-weight:600;margin-top:2px;}
+.off{font-size:12px;font-weight:500;color:var(--text-3);padding:5px 9px;border-radius:8px;
   background:var(--glass-2);flex:0 0 auto;white-space:nowrap;overflow:hidden;}
 
 /* ------------------------------ attribution ------------------------------
@@ -1077,7 +1097,7 @@ img{display:block;max-width:100%;}
    -------------------------------------------------------------------------- */
 .fin{margin:0;padding:2px var(--pad) 0;
   display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
-  font-size:10.5px;line-height:1.4;color:var(--text-3);text-align:center;}
+  font-size:12px;line-height:1.4;color:var(--text-3);text-align:center;}
 .fin__p{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;}
 /* The logotype is two-colour by design: letters follow the theme through
    currentColor, arcs hold the brand red on both grounds. Only the colour
@@ -1166,7 +1186,7 @@ img{display:block;max-width:100%;}
 .cp>.snd{grid-area:send;}
 
 .cp textarea{min-width:0;width:100%;border:0;outline:0;resize:none;background:none;
-  font-size:15px;line-height:1.35;max-height:80px;padding:0 4px;}
+  font-size:16px;line-height:1.35;max-height:80px;padding:0 4px;}
 
 /* The sweep. One pass of light along the composer as it opens — the whole
    futurist trick is that it fires once and is gone, rather than idling. */
@@ -1184,7 +1204,7 @@ img{display:block;max-width:100%;}
 .cbt--cart{position:relative;}
 .cbt--cart .cbt__n{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;
   padding:0 5px;border-radius:10px;background:var(--brand);color:var(--brand-ink);
-  border:2px solid var(--bg);font-size:10.5px;font-weight:700;line-height:15px;
+  border:2px solid var(--bg);font-size:12px;font-weight:700;line-height:15px;
   display:none;text-align:center;font-variant-numeric:tabular-nums;
   box-shadow:0 2px 8px rgba(243,106,32,.45);}
 .cbt--cart.has .cbt__n{display:block;}
@@ -1214,7 +1234,7 @@ img{display:block;max-width:100%;}
    composer opened underneath it. That overlap was the flicker. */
 .ph.off{opacity:0;visibility:hidden;transition:none;}
 .ph span{position:absolute;inset:0;display:flex;align-items:center;
-  font-size:15px;line-height:22px;color:var(--text-3);
+  font-size:16px;line-height:22px;color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cbt{width:36px;height:36px;flex:0 0 36px;border-radius:48px;display:grid;place-items:center;
   background:var(--glass);border:1px solid var(--line);
@@ -1222,13 +1242,85 @@ img{display:block;max-width:100%;}
 .cbt svg{width:18px;height:18px;fill:currentColor;}
 .cbt.rec{background:var(--brand);color:var(--brand-ink);border-color:transparent;}
 .snd{width:36px;height:36px;flex:0 0 36px;border-radius:48px;display:grid;place-items:center;
-  background:var(--brand);color:var(--brand-ink);border:1px solid rgba(255,255,255,.12);}
+  background:var(--brand);color:var(--brand-ink);border:1px solid rgba(255,255,255,.12);
+  position:relative;transition:background .25s ease,border-color .25s ease;}
 .snd svg{width:18px;height:18px;fill:currentColor;}
 .snd:disabled{opacity:.45;}
 
+/* ======================================================================
+   THINKING — the circular pass
+
+   The composer is a capsule: a closed, fully-rounded outline. So while the
+   assistant works, "busy" travels AROUND it rather than across it. The
+   opening sweep is a straight left-to-right band because opening is a
+   one-shot; this is a loop, and a loop on a closed shape should follow the
+   shape.
+
+   Two parts, same idea at two scales:
+     · the border carries one angular sweep, 1.4s
+     · the send button drops the arrow for a 270° arc, 0.9s
+
+   The angle is animated through a registered custom property rather than by
+   rotating the element — rotating would spin the capsule mask itself and
+   the rounded ends would wobble. Where @property is unsupported the
+   gradient simply sits still, which still reads as a lit border.
+   ====================================================================== */
+@property --cp-sweep{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+
+.cp.think{
+  border-color:transparent;
+  background:
+    linear-gradient(var(--composer),var(--composer)) padding-box,
+    conic-gradient(from var(--cp-sweep),
+      transparent 0deg,
+      var(--brand) 58deg,
+      var(--ai-1) 108deg,
+      transparent 187deg,
+      transparent 360deg) border-box;
+  animation:cpSweep 1.4s linear infinite;
+}
+@keyframes cpSweep{ to{ --cp-sweep:360deg; } }
+
+/* the button stops being a send button while it is not one */
+.cp.think .snd{
+  background:var(--glass-2);
+  border-color:var(--line);
+  opacity:1;                       /* it is disabled, but it is not dimmed */
+}
+.cp.think .snd>svg[data-i]{ opacity:0; transform:scale(.6); }
+.snd>svg[data-i]{ transition:opacity .18s ease,transform .28s cubic-bezier(.34,1.56,.64,1); }
+
+.snd__arc{position:absolute;inset:0;display:grid;place-items:center;
+  opacity:0;transform:scale(.6);pointer-events:none;
+  transition:opacity .18s ease,transform .28s cubic-bezier(.34,1.56,.64,1);}
+.cp.think .snd__arc{opacity:1;transform:scale(1);}
+/* `.snd svg{width:18px;fill:currentColor}` above matches this svg too — same
+   specificity, so this only wins by being later in the file. Stated
+   explicitly rather than left to luck. */
+.snd .snd__arc svg{width:24px;height:24px;fill:none;}
+.snd__track{stroke:var(--line-strong);stroke-width:2.4;fill:none;}
+.snd__spin{stroke:var(--brand);stroke-width:2.4;stroke-linecap:round;fill:none;
+  /* r=9 → circumference 56.5; 42.4 of it is 270° */
+  stroke-dasharray:42.4 56.5;
+  /* pin the origin to the shape's own box: with the default view-box both
+     resolve to 12,12 here, but fill-box says what is meant and survives
+     someone changing the viewBox later */
+  transform-box:fill-box;transform-origin:50% 50%;
+  animation:sndSpin .9s linear infinite;}
+@keyframes sndSpin{ to{ transform:rotate(360deg); } }
+
+/* the two controls you cannot use right now step back, and the hint goes quiet */
+.cp.think .cbt{opacity:.45;pointer-events:none;}
+.cp.think .ph span{color:var(--text-3);}
+
+@media (prefers-reduced-motion:reduce){
+  .cp.think{animation:none;}
+  .snd__spin{animation:none;stroke-dasharray:42.4 56.5;}
+}
+
 .tst{position:fixed;left:50%;bottom:calc(140px + var(--safe-b));z-index:60;
   transform:translate(-50%,14px);padding:10px 15px;border-radius:var(--r-pill);
-  background:var(--text);color:var(--bg);font-size:13px;font-weight:500;
+  background:var(--text);color:var(--bg);font-size:14px;font-weight:500;
   opacity:0;pointer-events:none;display:flex;align-items:center;gap:7px;
   max-width:calc(100% - 32px);min-width:0;}
 .tst svg{width:15px;height:15px;fill:currentColor;flex:0 0 15px;}
@@ -1436,7 +1528,7 @@ img{display:block;max-width:100%;}
 
 .thk__w{position:relative;height:24px;width:100%;min-width:0;overflow:hidden;}
 .thk__w span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:500;letter-spacing:-.01em;color:var(--text);
+  font-size:16px;font-weight:500;letter-spacing:-.01em;color:var(--text);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:6px;}
 
 
@@ -1460,7 +1552,7 @@ img{display:block;max-width:100%;}
 .ttl:hover,.ttl.open{background:var(--glass-2);border-color:var(--line);}
 .ttl__n{display:none;flex:0 0 auto;min-width:17px;height:17px;padding:0 5px;
   border-radius:99px;background:var(--glass-2);border:1px solid var(--line-soft);
-  font-size:10.5px;font-weight:600;line-height:15px;text-align:center;
+  font-size:12px;font-weight:600;line-height:15px;text-align:center;
   color:var(--text-2);font-variant-numeric:tabular-nums;}
 .ttl--many .ttl__n{display:block;}
 .ttl--many{border-color:var(--line);}
@@ -1487,7 +1579,7 @@ img{display:block;max-width:100%;}
 }
 .isl.on{visibility:visible;}
 .isl__h{display:flex;align-items:center;gap:8px;padding:13px 14px 9px;flex:0 0 auto;min-width:0;}
-.isl__h h4{margin:0;flex:1;min-width:0;font-size:11px;font-weight:600;letter-spacing:.07em;
+.isl__h h4{margin:0;flex:1;min-width:0;font-size:12px;font-weight:600;letter-spacing:.07em;
   text-transform:uppercase;color:var(--text-2);}
 .isl__l{overflow-y:auto;padding:0 10px 10px;flex:1 1 auto;scrollbar-width:none;min-width:0;}
 .isl__l::-webkit-scrollbar{display:none;}
@@ -1508,7 +1600,7 @@ img{display:block;max-width:100%;}
 /* Item count — the one thing that genuinely differs between two chats. */
 .ch__c{flex:0 0 auto;min-width:20px;height:20px;padding:0 6px;border-radius:99px;
   background:var(--glass-2);border:1px solid var(--line-soft);
-  font-size:11px;font-weight:600;line-height:18px;text-align:center;
+  font-size:12px;font-weight:600;line-height:18px;text-align:center;
   color:var(--text-2);font-variant-numeric:tabular-nums;}
 .ch__x{width:26px;height:26px;flex:0 0 26px;border-radius:50%;display:grid;place-items:center;
   color:var(--text-3);opacity:.6;transition:opacity .16s,background .16s;}
@@ -1568,7 +1660,7 @@ img{display:block;max-width:100%;}
 .w__skip{flex:0 0 auto;font-size:12px;font-weight:500;color:var(--text-2);
   padding:0 10px;min-height:44px;display:inline-flex;align-items:center;}
 .w__skip:hover{color:var(--text);}
-.w__hint{font-size:11px;color:var(--text-3);margin-top:9px;display:flex;
+.w__hint{font-size:12px;color:var(--text-3);margin-top:9px;display:flex;
   align-items:center;gap:5px;min-width:0;}
 .w__hint svg{width:12px;height:12px;fill:currentColor;flex:0 0 12px;}
 

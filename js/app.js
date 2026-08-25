@@ -202,6 +202,11 @@ const UI=(function(){
         if(document.activeElement!==inp) this.start(); },
       /* Voice mode borrows the same line rather than fighting it. */
       say(txt){ this.stop(); box.classList.remove('off'); line.textContent=txt; reset(); },
+      /* Called when the assistant finishes. Same guards as toggle: never
+         come back underneath a caret, and never on top of half-typed text. */
+      resume(){ if(document.activeElement===inp) return;
+        if(inp.value.trim()) return;
+        this.start(); },
     };
   })();
 
@@ -443,6 +448,10 @@ const UI=(function(){
     const ex=document.getElementById('thk');
     if(!on){
       M.mesh(false);
+      /* the composer stops working at the same moment the panel goes, so
+         the two never disagree about whether anything is happening */
+      cp.classList.remove('think');
+      ph.resume();
       if(thinkStop){thinkStop();thinkStop=null;}
       if(ex){
         const G=M.g();
@@ -454,6 +463,11 @@ const UI=(function(){
     if(ex) return;
     M.busy(mark);
     M.mesh(true);
+    /* The circular pass: the capsule border sweeps and the send button
+       becomes a 270° arc. Both are pure CSS, so they are correct with
+       JS-driven motion absent — the class is the state. */
+    cp.classList.add('think');
+    ph.stop();
     const el=thinkPanel();
     /* Fill the screen from the last thing said down to the composer, rather
        than sitting in a fixed 172px slot. Measured, not guessed: the thread's
