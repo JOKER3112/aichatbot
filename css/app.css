@@ -156,9 +156,10 @@ img{display:block;max-width:100%;}
    screen warms up when the assistant is working instead of one rectangle in
    the middle of it doing something the rest of the screen isn't.
 
-   Two intensities. Resting it's a faint ambient wash and nothing animates —
-   a perpetual loop is a battery cost for something nobody is looking at.
-   Thinking raises the opacity and starts the drift.
+   One intensity now: a faint ambient wash, and nothing animates — a
+   perpetual loop is a battery cost for something nobody is looking at.
+   Thinking used to raise it to full and start a drift; it now fades the
+   layer out instead, because the composer took over saying "working".
    ======================================================================== */
 .amb{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
   opacity:.34;transition:opacity .6s ease;
@@ -173,11 +174,16 @@ img{display:block;max-width:100%;}
 .amb i:nth-child(2){right:-22%;bottom:-8%;width:88%;height:60%;
   background:radial-gradient(closest-side circle at 50% 50%,var(--mesh-2),transparent 74%);}
 .amb i:nth-child(3),.amb i:nth-child(4){display:none;}
-/* Working. The whole screen, not one panel in the middle of it. Both
-   themes share these two levels — the per-theme alphas above already do
-   all the dimming, and a light-only override on top of them was part of
-   why light vanished the first time. */
-.app.busy .amb{opacity:1;}
+/* Working — and the screen goes QUIET, not loud.
+   This used to raise the mesh to full opacity, on the theory that the whole
+   screen should say "working". That was written before the composer could
+   say it: now the capsule sweeps and the send button spins, so a full-
+   strength ember-and-indigo wash behind them was a second voice saying the
+   same thing louder. Two signals competing, and the orb and its rotating
+   line had to fight a saturated background to stay legible.
+   So the mesh steps aside instead. The 0.6s fade above carries it out and
+   back, which reads as the room settling while it thinks. */
+.app.busy .amb{opacity:0;}
 
 /* ================================ HEADER ================================ */
 /* .7 alpha over a scrolling thread meant a card's orange Add button read
@@ -1476,26 +1482,20 @@ img{display:block;max-width:100%;}
 .thk{position:relative;padding:40px var(--pad) 36px;min-width:0;
   min-height:var(--thk-h,58dvh);display:grid;place-items:center;}
 
-/* The mask is load-bearing, not polish. The fields are drawn larger than the
-   panel so they have room to drift, which means `overflow:hidden` would slice
-   straight through solid colour and leave a hard horizontal edge — a box,
-   which is the exact thing we just removed. Feathering the whole layer to
-   nothing lets it bleed into the thread instead. */
-/* Two things were making this read as a rectangle rather than a field.
+/* What's left in this panel is the mark and the word, and that is the whole
+   point of it.
 
-   The blobs were solid circles: blurring a hard-edged shape still leaves a
-   defined boundary, so four of them tile into something with corners. They
-   are radial gradients fading to transparent now — soft before the blur
-   even runs.
+   Three things have been stripped out over time and none of them should
+   come back: the panel's own copy of the mesh (the app-level layer sits
+   behind it already, and two stacked meshes muddied each other), the
+   skeleton card underneath (it promised a carousel that half the answers
+   never deliver), and the border (a bordered surface between two other
+   bordered surfaces reads as "another widget arrived", not "working").
 
-   And the mask was radial, which on a tall panel draws a tall ellipse: a
-   closed shape, which is exactly what a rectangle is. The mask is vertical
-   only now. The field bleeds off the left and right edges of the phone and
-   fades out top and bottom, so it has no outline anywhere to read as an
-   object sitting on the screen. */
-/* The panel used to carry its own copy of the mesh. It doesn't need one:
-   the app-level layer is already behind it, and two meshes stacked just
-   muddied each other. What's left here is the mark and the word. */
+   As of the circular pass the background goes quiet here too — see
+   `.app.busy .amb`, which now fades the mesh out rather than up. The orb
+   and the rotating line sit on the plain page, and the composer does the
+   rest of the talking. */
 /* ------------------------------- mesh colour ----------------------------
    Two pigments, not four: ember and indigo. Four overlapping washes average
    into one muddy tint — with two there is a readable gradient BETWEEN them,

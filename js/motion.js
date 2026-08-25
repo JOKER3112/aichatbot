@@ -51,41 +51,28 @@ const M=(function(){
         {xPercent:120,opacity:0,duration:.72,ease:'power2.out'});
     },
     /* ------------------------------------------------------ the mesh
-       Two fields, and while the assistant is working they travel sideways
-       past each other rather than breathing in place. That lateral pass is
-       the whole effect: the warm one crosses right while the cool one
-       crosses left, so the blend between them sweeps across the screen
-       instead of pulsing.
+       Two soft fields behind the thread. They used to brighten and drift
+       sideways past each other while the assistant worked.
 
-       x, y and scale still get separate tweens on periods that don't divide
-       into each other, so the vertical wander never syncs up with the
-       horizontal pass and the loop has no visible beat.
+       Both of those are gone. The composer now carries the working state —
+       the capsule sweeps and the send button spins — and a full-strength
+       ember-and-indigo wash behind that was a second voice saying the same
+       thing louder, with the orb and its rotating line fighting a saturated
+       background to stay readable. So `.app.busy` fades the layer out
+       instead (see .app.busy .amb in app.css).
 
-       Drifts only while working — a perpetual loop behind an idle screen is
-       a battery cost for something nobody is looking at. */
+       With the layer hidden while busy and static while idle, there is
+       nothing left for the drift to move: it was animating something either
+       invisible or deliberately still, which is battery spent on nothing.
+       All this does now is toggle the class and make sure the fields are
+       parked, so a mesh left mid-drift by an older build lands cleanly. */
     mesh(on){
       const G=g(), amb=document.getElementById('amb'), app=document.getElementById('app');
       if(app) app.classList.toggle('busy',!!on);   /* opacity is CSS's job */
       if(!G||!amb) return;
       const blobs=amb.querySelectorAll('i');
-      if(!on){
-        G.killTweensOf(blobs);
-        G.to(blobs,{xPercent:0,yPercent:0,scale:1,duration:.9,ease:'power2.out'});
-        return;
-      }
-      const drift=[
-        /* warm field: right, slow vertical drift, slower breath */
-        { x:  42, y: -12, s:1.14, dx:4.9, dy:7.3, ds:11.7 },
-        /* cool field: left, on periods that share no factor with the above */
-        { x: -46, y:  14, s:0.88, dx:6.1, dy:9.7, ds:8.3  },
-      ];
-      blobs.forEach((b,k)=>{
-        const p=drift[k%drift.length];
-        G.killTweensOf(b);
-        G.to(b,{xPercent:p.x,duration:p.dx,repeat:-1,yoyo:true,ease:'sine.inOut'});
-        G.to(b,{yPercent:p.y,duration:p.dy,repeat:-1,yoyo:true,ease:'sine.inOut'});
-        G.to(b,{scale:p.s,  duration:p.ds,repeat:-1,yoyo:true,ease:'sine.inOut'});
-      });
+      G.killTweensOf(blobs);
+      G.set(blobs,{xPercent:0,yPercent:0,scale:1});
     },
     tap(el,to){const G=g();if(!G||!el)return;
       G.timeline().to(el,{scale:to||.96,duration:.08}).to(el,{scale:1,duration:.22,ease:'power3.out'});},
